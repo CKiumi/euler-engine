@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result};
 
 use super::Expr;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Mul<'a> {
     exprs: Vec<Expr<'a>>,
 }

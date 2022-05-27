@@ -1,8 +1,11 @@
-use std::fmt::{Display, Formatter, Result};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops,
+};
 
 use super::Expr;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Add<'a> {
     exprs: Vec<Expr<'a>>,
 }
@@ -10,6 +13,13 @@ pub struct Add<'a> {
 impl<'a> Add<'a> {
     pub fn new(exprs: Vec<Expr<'a>>) -> Self {
         Add { exprs }
+    }
+}
+
+impl<'a> ops::Add<Add<'a>> for Add<'a> {
+    type Output = Add<'a>;
+    fn add(self, mut _rhs: Add<'a>) -> Add<'a> {
+        Add::new(vec![self.exprs, _rhs.exprs].concat())
     }
 }
 
@@ -24,14 +34,16 @@ impl<'a> Display for Add<'a> {
     }
 }
 
-#[test]
-fn test_add() {
-    use super::{Mul, Sym};
-    let x = Sym::new("x");
-    let y = Sym::new("y");
-    let add = Add::new(vec![Expr::Sym(x), Expr::Sym(y), Expr::Sym(y)]);
-    let mul = Mul::new(vec![Expr::Sym(x), Expr::Sym(y)]);
-    assert_eq!(add.to_string().as_str(), "(x+y+y)");
-    let add = Add::new(vec![Expr::Sym(x), Expr::Sym(y), Expr::Mul(mul)]);
-    assert_eq!(add.to_string().as_str(), "(x+y+(x*y))");
+#[cfg(test)]
+mod test_add {
+    use super::super::{Add, Expr, Mul, Sym};
+    use crate::{add, mul, sym};
+    #[test]
+    fn test_fmt() {
+        let test = add![sym!("x"), sym!("y"), sym!("y")];
+        assert_eq!(test.to_string().as_str(), "(x+y+y)");
+
+        let test = add![sym!("x"), sym!("y"), mul!(sym!("x"), sym!("y"))];
+        assert_eq!(test.to_string().as_str(), "(x+y+(x*y))");
+    }
 }
