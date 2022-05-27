@@ -1,11 +1,8 @@
-use std::{
-    fmt::{Display, Formatter, Result},
-    ops,
-};
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Num {
-    num: i32,
+    pub num: i32,
 }
 
 impl Num {
@@ -20,16 +17,10 @@ impl Display for Num {
     }
 }
 
-impl ops::Add<Num> for Num {
-    type Output = Num;
-    fn add(self, _rhs: Num) -> Num {
-        Num::new(self.num + _rhs.num)
-    }
-}
-
 #[test]
 fn test_num() {
-    let x = Num::new(1);
-    let y = Num::new(2);
+    use super::Expr;
+    let x = Expr::Num(Num::new(1));
+    let y = Expr::Num(Num::new(2));
     assert_eq!((x + y).to_string().as_str(), "3");
 }

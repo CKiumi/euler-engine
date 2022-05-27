@@ -1,25 +1,14 @@
-use std::{
-    fmt::{Display, Formatter, Result},
-    ops,
-};
-
 use super::Expr;
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Add<'a> {
-    exprs: Vec<Expr<'a>>,
+    pub exprs: Vec<Expr<'a>>,
 }
 
 impl<'a> Add<'a> {
     pub fn new(exprs: Vec<Expr<'a>>) -> Self {
         Add { exprs }
-    }
-}
-
-impl<'a> ops::Add<Add<'a>> for Add<'a> {
-    type Output = Add<'a>;
-    fn add(self, mut _rhs: Add<'a>) -> Add<'a> {
-        Add::new(vec![self.exprs, _rhs.exprs].concat())
     }
 }
 

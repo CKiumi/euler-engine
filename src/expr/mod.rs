@@ -8,6 +8,7 @@ use mul::Mul;
 use num::Num;
 use pow::Pow;
 use std::fmt::{Display, Formatter, Result};
+use std::ops;
 use sym::Sym;
 
 #[derive(PartialEq, Eq, Clone)]
@@ -17,6 +18,27 @@ pub enum Expr<'a> {
     Add(Add<'a>),
     Mul(Mul<'a>),
     Pow(Pow<'a>),
+}
+
+impl<'a> ops::Add<Expr<'a>> for Expr<'a> {
+    type Output = Expr<'a>;
+    fn add(self, _rhs: Expr<'a>) -> Expr {
+        match self {
+            Expr::Num(x) => match _rhs {
+                Expr::Num(y) => Expr::Num(Num::new(x.num + y.num)),
+                Expr::Add(add) => Expr::Add(Add::new(vec![vec![Expr::Num(x)], add.exprs].concat())),
+                _ => Expr::Add(Add::new(vec![Expr::Num(x), _rhs])),
+            },
+            Expr::Add(add1) => match _rhs {
+                Expr::Add(add2) => Expr::Add(Add::new(vec![add1.exprs, add2.exprs].concat())),
+                _rhs => Expr::Add(Add::new(vec![add1.exprs, vec![_rhs]].concat())),
+            },
+            expr => match _rhs {
+                Expr::Add(add) => Expr::Add(Add::new(vec![vec![expr], add.exprs].concat())),
+                _ => Expr::Add(Add::new(vec![expr, _rhs])),
+            },
+        }
+    }
 }
 
 #[macro_export]
@@ -62,11 +84,6 @@ impl<'a> Display for Expr<'a> {
 
 #[cfg(test)]
 mod test_expr {
-    use super::{Add, Expr, Mul, Sym};
     #[test]
-    fn test_fmt() {
-        println!("{}", sym!("x"));
-        println!("{}", add![sym!("x"), sym!("x"), sym!("x")]);
-        println!("{}", mul![sym!("x"), sym!("x"), sym!("x")]);
-    }
+    fn test_fmt() {}
 }

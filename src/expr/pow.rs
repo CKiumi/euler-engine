@@ -1,6 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
-
 use super::Expr;
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Pow<'a> {
@@ -26,11 +25,10 @@ impl<'a> Display for Pow<'a> {
 
 #[test]
 fn test_pow() {
-    use super::Sym;
-    let x = Sym::new("x");
-    let y = Sym::new("y");
-    let pow = Pow::new(Expr::Sym(x), Expr::Sym(y));
-    assert_eq!(pow.to_string().as_str(), "x^y");
-    let pow = Pow::new(Expr::Add(x + y), Expr::Add(x + y));
+    use super::{Add, Sym};
+    use crate::{add, sym};
+    let test = Pow::new(sym!("x"), sym!("y"));
+    assert_eq!(test.to_string().as_str(), "x^y");
+    let pow = Pow::new(add![sym!("x"), sym!("y")], add![sym!("x"), sym!("y")]);
     assert_eq!(pow.to_string().as_str(), "(x+y)^(x+y)");
 }

@@ -1,6 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
-
 use super::Expr;
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Mul<'a> {
@@ -26,9 +25,8 @@ impl<'a> Display for Mul<'a> {
 
 #[test]
 fn test_mul() {
-    use super::Sym;
-    let x = Sym::new("x");
-    let y = Sym::new("y");
-    let mul = Mul::new(vec![Expr::Sym(x), Expr::Sym(y), Expr::Sym(y)]);
+    use super::{Mul, Sym};
+    use crate::{mul, sym};
+    let mul = mul![sym!("x"), sym!("y"), sym!("y")];
     assert_eq!(mul.to_string().as_str(), "(x*y*y)");
 }
