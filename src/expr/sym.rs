@@ -3,9 +3,10 @@ use std::{
     ops,
 };
 
-use super::add::Add;
+use super::Add;
+use super::Expr;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Sym<'a> {
     symbol: &'a str,
 }
@@ -25,13 +26,13 @@ impl<'a> Display for Sym<'a> {
 impl<'a> ops::Add<Sym<'a>> for Sym<'a> {
     type Output = Add<'a>;
     fn add(self, _rhs: Sym<'a>) -> Add<'a> {
-        Add::new(vec![self, _rhs])
+        Add::new(vec![Expr::Sym(self), Expr::Sym(_rhs)])
     }
 }
 
 #[test]
 fn test_sym() {
     let x = Sym::new("x");
-    println!("{x}");
-    println!("{}", x + x);
+    assert_eq!(x.to_string().as_str(), "x");
+    assert_eq!((x + x).to_string().as_str(), "(x+x)");
 }

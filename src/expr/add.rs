@@ -1,12 +1,14 @@
 use std::fmt::{Display, Formatter, Result};
 
-use super::sym::Sym;
+use super::Expr;
+
+#[derive(PartialEq, Eq)]
 pub struct Add<'a> {
-    exprs: Vec<Sym<'a>>,
+    exprs: Vec<Expr<'a>>,
 }
 
 impl<'a> Add<'a> {
-    pub fn new(exprs: Vec<Sym<'a>>) -> Self {
+    pub fn new(exprs: Vec<Expr<'a>>) -> Self {
         Add { exprs }
     }
 }
@@ -24,8 +26,12 @@ impl<'a> Display for Add<'a> {
 
 #[test]
 fn test_add() {
+    use super::{Mul, Sym};
     let x = Sym::new("x");
     let y = Sym::new("y");
-    let add = Add::new(vec![x, y, y]);
-    println!("{add}");
+    let add = Add::new(vec![Expr::Sym(x), Expr::Sym(y), Expr::Sym(y)]);
+    let mul = Mul::new(vec![Expr::Sym(x), Expr::Sym(y)]);
+    assert_eq!(add.to_string().as_str(), "(x+y+y)");
+    let add = Add::new(vec![Expr::Sym(x), Expr::Sym(y), Expr::Mul(mul)]);
+    assert_eq!(add.to_string().as_str(), "(x+y+(x*y))");
 }
