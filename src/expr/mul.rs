@@ -45,11 +45,15 @@ impl<'a> Mul<'a> {
 
 impl<'a> Display for Mul<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let mut result = self.exprs[0].to_string();
-        for i in 1..self.exprs.len() {
-            result = format!("{}*{}", result, self.exprs[i]);
+        let mut result = String::new();
+        for expr in &self.exprs {
+            result = if let Expr::Add(_) = expr {
+                format!("{}*({})", result, expr)
+            } else {
+                format!("{}*{}", result, expr)
+            };
         }
-        write!(f, "{}", result)
+        write!(f, "{}", &result[1..])
     }
 }
 
@@ -59,6 +63,6 @@ fn test_mul() {
     let x = Sym::new("x");
     let y = Sym::new("y");
     let n3 = Num::new(3);
-    assert_eq!((x * y * y).to_pow().to_string(), "x*y^2");
-    assert_eq!((x * y * n3 * y).collect().to_string(), "3*x*y^2");
+    assert_eq!((x * y * y).to_pow().to_string(), "x*y^{2}");
+    assert_eq!((x * y * n3 * y).collect().to_string(), "3*x*y^{2}");
 }

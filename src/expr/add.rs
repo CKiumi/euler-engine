@@ -51,7 +51,6 @@ impl<'a> Display for Add<'a> {
         for i in 1..self.exprs.len() {
             result = format!("{}+{}", result, self.exprs[i]);
         }
-        result = format!("({})", result);
         write!(f, "{}", result)
     }
 }
@@ -65,19 +64,19 @@ mod test_add {
         let y = Sym::new("y");
         let n2 = Num::new(2);
 
-        assert_eq!((x + y).to_string(), "(x+y)");
+        assert_eq!((x + y).to_string(), "x+y");
 
-        assert_eq!((x + y + y).to_string(), "(x+y+y)");
+        assert_eq!((x + y + y).to_string(), "x+y+y");
 
         let test = x + y + x * y;
-        assert_eq!(test.to_string(), "(x+y+x*y)");
+        assert_eq!(test.to_string(), "x+y+x*y");
 
-        assert_eq!(((x + y) ^ x).to_string(), "(x+y)^x");
-        assert_eq!((((x ^ y) + y + x) ^ x).to_string(), "(x^y+y+x)^x");
-        assert_eq!((x + y + y).collect().to_string(), "(x+2*y)");
+        assert_eq!(((x + y) ^ x).to_string(), "(x+y)^{x}");
+        assert_eq!((((x ^ y) + y + x) ^ x).to_string(), "(x^{y}+y+x)^{x}");
+        assert_eq!((x + y + y).collect().to_string(), "x+2*y");
         assert_eq!(
             (x + (y ^ n2) + (y ^ n2) * n2).collect().to_string(),
-            "(x+3*y^2)"
+            "x+3*y^{2}"
         );
     }
 }

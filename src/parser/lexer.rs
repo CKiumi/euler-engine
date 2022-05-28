@@ -12,7 +12,7 @@ pub enum Token<'a> {
     UnderScore,
     Num(Num),
     Sym(&'a str),
-    Error(&'static str),
+    Error(&'a str),
     Eof,
 }
 
@@ -43,7 +43,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
         let token = match self.cur() {
             '+' => Token::AddInfix,
@@ -62,7 +62,7 @@ impl<'a> Lexer<'a> {
         token
     }
 
-    fn read_command(&mut self) -> Token {
+    fn read_command(&mut self) -> Token<'a> {
         self.read_char();
         let mut offset = 0;
         while self.cur().is_ascii_alphabetic() {
@@ -99,13 +99,28 @@ impl<'a> Lexer<'a> {
             Err(_) => panic!("Unexpected number parse error"),
         }
     }
+
+    pub fn arg_to_string(&mut self) -> &'a str {
+        let mut offset = 0;
+        while self.cur() != '}' {
+            self.read_char();
+            offset += 1;
+            if self.cur() == '\u{0}' {
+                panic!("expected {}", "}")
+            }
+        }
+        self.read_char();
+        &self.input[self.cursor - offset..self.cursor - 1]
+    }
 }
 
 #[test]
 fn test_lexer() {
-    let mut lexer = Lexer::new(" \\left ( \\ ab +3 2\\right) c\\x");
+    let mut lexer = Lexer::new(" \\left ( {\\} ab +3 2\\right) c\\x");
     assert_eq!(lexer.next_token(), Token::LParen);
+    assert_eq!(lexer.next_token(), Token::LCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("\\"));
+    assert_eq!(lexer.next_token(), Token::RCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("a"));
     assert_eq!(lexer.next_token(), Token::Sym("b"));
     assert_eq!(lexer.next_token(), Token::AddInfix);

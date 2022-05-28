@@ -26,8 +26,11 @@ impl<'a> Pow<'a> {
 
 impl<'a> Display for Pow<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let result = format!("{}^{}", self.body, self.pow);
-        write!(f, "{}", result)
+        if let Expr::Sym(_) | Expr::Num(_) = *self.body {
+            write!(f, "{}", format_args!("{}^{{{}}}", self.body, self.pow))
+        } else {
+            write!(f, "{}", format_args!("({})^{{{}}}", self.body, self.pow))
+        }
     }
 }
 
@@ -37,13 +40,13 @@ fn test_pow() {
     let x = Sym::new("x");
     let y = Sym::new("y");
     let pow = Pow::new(Expr::Sym(x), Expr::Sym(y));
-    assert_eq!(pow.to_string(), "x^y");
+    assert_eq!(pow.to_string(), "x^{y}");
 
     let pow = Pow::new(
         Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
         Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
     );
-    assert_eq!(pow.to_string(), "(x+y)^(x+y)");
+    assert_eq!(pow.to_string(), "(x+y)^{x+y}");
 
     let pow = Pow::new(
         Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
