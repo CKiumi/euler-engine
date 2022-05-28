@@ -1,5 +1,4 @@
 use std::fmt::{Display, Formatter, Result};
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Num {
     pub num: i32,
@@ -22,5 +21,6 @@ fn test_num() {
     use super::Expr;
     let x = Expr::Num(Num::new(1));
     let y = Expr::Num(Num::new(2));
-    assert_eq!((x + y).to_string().as_str(), "3");
+    assert_eq!((x + y).to_string(), "3");
+    assert_eq!((Num::new(3) ^ Num::new(3)).to_string(), "27");
 }
