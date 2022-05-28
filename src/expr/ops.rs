@@ -102,6 +102,13 @@ impl_ops_mul!(Add<'a>; Sym<'a>,Pow<'a>,Add<'a>,Num);
 impl_ops_mul!(Pow<'a>; Sym<'a>,Pow<'a>,Add<'a>,Num);
 impl_ops_mul!(Num; Sym<'a>,Pow<'a>,Add<'a>);
 
+impl ops::Mul<Num> for Num {
+    type Output = Num;
+    fn mul<'a>(self, rhs: Num) -> Self::Output {
+        Num::new(self.num.pow(rhs.num as u32))
+    }
+}
+
 /// Overload ^ operator
 macro_rules! impl_ops_pow {
     ($x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?) => {

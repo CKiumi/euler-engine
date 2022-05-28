@@ -4,12 +4,12 @@ mod num;
 mod ops;
 mod pow;
 pub mod sym;
-use add::Add;
-use mul::Mul;
-use num::Num;
-use pow::Pow;
+pub use add::Add;
+pub use mul::Mul;
+pub use num::Num;
+pub use pow::Pow;
 use std::fmt::{Display, Formatter, Result};
-use sym::Sym;
+pub use sym::Sym;
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum Expr<'a> {

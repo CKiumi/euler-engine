@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter, Result};
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Debug, Eq)]
 pub struct Num {
     pub num: i32,
 }
