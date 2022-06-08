@@ -50,7 +50,14 @@ impl_ops_mul!(Num; Sym<'a>,Pow<'a>,Add<'a>);
 impl ops::Mul<Num> for Num {
     type Output = Num;
     fn mul<'a>(self, rhs: Num) -> Self::Output {
-        Num::new(self.num.pow(rhs.num as u32))
+        Num::new(self.num * rhs.num)
+    }
+}
+
+impl<'a> ops::Mul<Mul<'a>> for Mul<'a> {
+    type Output = Mul<'a>;
+    fn mul(self, rhs: Mul<'a>) -> Self::Output {
+        Mul::new(vec![self.exprs, rhs.exprs].concat())
     }
 }
 
@@ -61,4 +68,5 @@ fn test_mul_ops() {
     let y = Sym::new("y");
     let n = Num::new(1);
     assert_eq!((x * y * n * y).to_string(), "x*y*y");
+    assert_eq!(((x * y) * (n * y)).to_string(), "x*y*y");
 }

@@ -44,13 +44,14 @@ impl<'a> Mul<'a> {
     /// Multi(x1,x1,num1,x3,num2)->Multi(num1*num2,Pow(x1,2),x3) otherwise Expr->Expr
     /// depend on multi_to_pow
     pub fn collect(&self) -> Self {
-        let mut coef = Expr::Num(Num::new(1));
+        let mut coef = Num::new(1);
         let mut body = vec![Expr::Num(Num::new(1))];
         self.exprs.iter().for_each(|expr| match expr {
-            Expr::Num(_) => coef = coef.clone() * (*expr).clone(),
+            Expr::Num(n) => coef = coef * *n,
             expr => body.push(expr.clone()),
         });
-        body[0] = coef;
+        body[0] = Expr::Num(coef);
+
         Mul::new(body).to_pow()
     }
 }

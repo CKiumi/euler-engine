@@ -21,10 +21,9 @@ pub enum Expr<'a> {
 }
 
 impl<'a> Expr<'a> {
-    /// Pow(x,y)->(x,y) otherwise expr->(expr,1)
     fn collect(&self) -> Self {
         match self {
-            // Expr::Add(add) => Expr::Add(add.collect()),
+            Expr::Add(add) => Expr::Add(add.collect()),
             Expr::Mul(mul) => Expr::Mul(mul.collect()),
             x => x.clone(),
         }
@@ -53,20 +52,32 @@ impl<'a> Expr<'a> {
 impl<'a> std::ops::Add<Expr<'a>> for Expr<'a> {
     type Output = Expr<'a>;
     fn add(self, _rhs: Expr<'a>) -> Expr {
-        match self {
-            Expr::Num(x) => match _rhs {
-                Expr::Num(y) => Expr::Num(x + y),
-                Expr::Add(add) => Expr::Add(x + add),
-                _ => Expr::Add(Add::new(vec![Expr::Num(x), _rhs])),
-            },
-            Expr::Add(add1) => match _rhs {
-                Expr::Add(add2) => Expr::Add(Add::new(vec![add1.exprs, add2.exprs].concat())),
-                _rhs => Expr::Add(Add::new(vec![add1.exprs, vec![_rhs]].concat())),
-            },
-            expr => match _rhs {
-                Expr::Add(add) => Expr::Add(Add::new(vec![vec![expr], add.exprs].concat())),
-                _ => Expr::Add(Add::new(vec![expr, _rhs])),
-            },
+        match (self, _rhs) {
+            (Expr::Num(x), Expr::Num(y)) => Expr::Num(x + y),
+            (Expr::Num(x), Expr::Sym(y)) => Expr::Add(x + y),
+            (Expr::Num(x), Expr::Add(y)) => Expr::Add(x + y),
+            (Expr::Num(x), Expr::Mul(y)) => Expr::Add(x + y),
+            (Expr::Num(x), Expr::Pow(y)) => Expr::Add(x + y),
+            (Expr::Sym(x), Expr::Num(y)) => Expr::Add(x + y),
+            (Expr::Sym(x), Expr::Sym(y)) => Expr::Add(x + y),
+            (Expr::Sym(x), Expr::Add(y)) => Expr::Add(x + y),
+            (Expr::Sym(x), Expr::Mul(y)) => Expr::Add(x + y),
+            (Expr::Sym(x), Expr::Pow(y)) => Expr::Add(x + y),
+            (Expr::Add(x), Expr::Num(y)) => Expr::Add(x + y),
+            (Expr::Add(x), Expr::Sym(y)) => Expr::Add(x + y),
+            (Expr::Add(x), Expr::Add(y)) => Expr::Add(x + y),
+            (Expr::Add(x), Expr::Mul(y)) => Expr::Add(x + y),
+            (Expr::Add(x), Expr::Pow(y)) => Expr::Add(x + y),
+            (Expr::Mul(x), Expr::Num(y)) => Expr::Add(x + y),
+            (Expr::Mul(x), Expr::Sym(y)) => Expr::Add(x + y),
+            (Expr::Mul(x), Expr::Add(y)) => Expr::Add(x + y),
+            (Expr::Mul(x), Expr::Mul(y)) => Expr::Add(x + y),
+            (Expr::Mul(x), Expr::Pow(y)) => Expr::Add(x + y),
+            (Expr::Pow(x), Expr::Num(y)) => Expr::Add(x + y),
+            (Expr::Pow(x), Expr::Sym(y)) => Expr::Add(x + y),
+            (Expr::Pow(x), Expr::Add(y)) => Expr::Add(x + y),
+            (Expr::Pow(x), Expr::Mul(y)) => Expr::Add(x + y),
+            (Expr::Pow(x), Expr::Pow(y)) => Expr::Add(x + y),
         }
     }
 }
@@ -74,22 +85,32 @@ impl<'a> std::ops::Add<Expr<'a>> for Expr<'a> {
 impl<'a> std::ops::Mul<Expr<'a>> for Expr<'a> {
     type Output = Expr<'a>;
     fn mul(self, rhs: Expr<'a>) -> Self::Output {
-        match self {
-            Expr::Num(x) if x.num == 1 => rhs,
-            Expr::Num(x) => match rhs {
-                Expr::Num(y) => Expr::Num(Num::new(x.num * y.num)),
-                Expr::Mul(mul) => Expr::Mul(Mul::new(vec![vec![Expr::Num(x)], mul.exprs].concat())),
-                _ => Expr::Mul(Mul::new(vec![Expr::Num(x), rhs])),
-            },
-
-            Expr::Mul(mul1) => match rhs {
-                Expr::Mul(mul2) => Expr::Mul(Mul::new(vec![mul1.exprs, mul2.exprs].concat())),
-                exp => Expr::Mul(Mul::new(vec![mul1.exprs, vec![exp]].concat())),
-            },
-            expr => match rhs {
-                Expr::Mul(mul) => Expr::Mul(Mul::new(vec![vec![expr], mul.exprs].concat())),
-                _ => Expr::Mul(Mul::new(vec![expr, rhs])),
-            },
+        match (self, rhs) {
+            (Expr::Num(x), Expr::Num(y)) => Expr::Num(x * y),
+            (Expr::Num(x), Expr::Sym(y)) => Expr::Mul(x * y),
+            (Expr::Num(x), Expr::Add(y)) => Expr::Mul(x * y),
+            (Expr::Num(x), Expr::Mul(y)) => Expr::Mul(x * y),
+            (Expr::Num(x), Expr::Pow(y)) => Expr::Mul(x * y),
+            (Expr::Sym(x), Expr::Num(y)) => Expr::Mul(x * y),
+            (Expr::Sym(x), Expr::Sym(y)) => Expr::Mul(x * y),
+            (Expr::Sym(x), Expr::Add(y)) => Expr::Mul(x * y),
+            (Expr::Sym(x), Expr::Mul(y)) => Expr::Mul(x * y),
+            (Expr::Sym(x), Expr::Pow(y)) => Expr::Mul(x * y),
+            (Expr::Add(x), Expr::Num(y)) => Expr::Mul(x * y),
+            (Expr::Add(x), Expr::Sym(y)) => Expr::Mul(x * y),
+            (Expr::Add(x), Expr::Add(y)) => Expr::Mul(x * y),
+            (Expr::Add(x), Expr::Mul(y)) => Expr::Mul(x * y),
+            (Expr::Add(x), Expr::Pow(y)) => Expr::Mul(x * y),
+            (Expr::Mul(x), Expr::Num(y)) => Expr::Mul(x * y),
+            (Expr::Mul(x), Expr::Sym(y)) => Expr::Mul(x * y),
+            (Expr::Mul(x), Expr::Add(y)) => Expr::Mul(x * y),
+            (Expr::Mul(x), Expr::Mul(y)) => Expr::Mul(x * y),
+            (Expr::Mul(x), Expr::Pow(y)) => Expr::Mul(x * y),
+            (Expr::Pow(x), Expr::Num(y)) => Expr::Mul(x * y),
+            (Expr::Pow(x), Expr::Sym(y)) => Expr::Mul(x * y),
+            (Expr::Pow(x), Expr::Add(y)) => Expr::Mul(x * y),
+            (Expr::Pow(x), Expr::Mul(y)) => Expr::Mul(x * y),
+            (Expr::Pow(x), Expr::Pow(y)) => Expr::Mul(x * y),
         }
     }
 }
@@ -104,4 +125,16 @@ impl<'a> Display for Expr<'a> {
             Expr::Pow(pow) => write!(f, "{}", pow),
         }
     }
+}
+
+#[test]
+fn test_expr() {
+    use super::Sym;
+    let x = Sym::new("x");
+    let y = Sym::new("y");
+    let pow = Expr::Pow(x ^ y);
+    assert_eq!(pow.detach_pow().0.to_string(), "x");
+    assert_eq!(pow.detach_pow().1.to_string(), "y");
+    assert_eq!(Expr::Sym(x).detach_pow().0.to_string(), "x");
+    assert_eq!(Expr::Sym(x).detach_pow().1.to_string(), "1");
 }

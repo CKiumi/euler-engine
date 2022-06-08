@@ -81,6 +81,7 @@ mod test_add {
         assert_eq!((x + n0 + y).to_string(), "x+y");
 
         assert_eq!((x + y + y).to_string(), "x+y+y");
+        assert_eq!((n2 * x + y).to_string(), "2*x+y");
 
         let test = x + y + x * y;
         assert_eq!(test.to_string(), "x+y+x*y");
@@ -93,5 +94,6 @@ mod test_add {
             (x + (y ^ n2) + (y ^ n2) * n2).collect().to_string(),
             "x+3*y^{2}"
         );
+        assert_eq!((n2 * x + x + y).collect().to_string(), "3*x+y");
     }
 }
