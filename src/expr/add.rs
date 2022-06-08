@@ -9,7 +9,18 @@ pub struct Add<'a> {
 
 impl<'a> Add<'a> {
     pub fn new(exprs: Vec<Expr<'a>>) -> Self {
-        Add { exprs }
+        Add {
+            exprs: exprs
+                .into_iter()
+                .filter(|x| {
+                    if let Expr::Num(n) = x {
+                        n.num != 0
+                    } else {
+                        true
+                    }
+                })
+                .collect::<Vec<Expr>>(),
+        }
     }
 
     /// Add(x1,x1,num1,x3)->Add(Multi(2,x1),num1,x3) otherwise crash
@@ -62,9 +73,12 @@ mod test_add {
     fn test_fmt() {
         let x = Sym::new("x");
         let y = Sym::new("y");
+        let z = Sym::new("z");
         let n2 = Num::new(2);
+        let n0 = Num::new(0);
 
         assert_eq!((x + y).to_string(), "x+y");
+        assert_eq!((x + n0 + y).to_string(), "x+y");
 
         assert_eq!((x + y + y).to_string(), "x+y+y");
 
@@ -74,6 +88,7 @@ mod test_add {
         assert_eq!(((x + y) ^ x).to_string(), "(x+y)^{x}");
         assert_eq!((((x ^ y) + y + x) ^ x).to_string(), "(x^{y}+y+x)^{x}");
         assert_eq!((x + y + y).collect().to_string(), "x+2*y");
+        assert_eq!((x + y + z).collect().to_string(), "x+y+z");
         assert_eq!(
             (x + (y ^ n2) + (y ^ n2) * n2).collect().to_string(),
             "x+3*y^{2}"

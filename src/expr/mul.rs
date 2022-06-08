@@ -7,8 +7,20 @@ pub struct Mul<'a> {
 }
 
 impl<'a> Mul<'a> {
+    /// [x1,x2,1,x3]->Mul(x1,x2,x3)
     pub fn new(exprs: Vec<Expr<'a>>) -> Self {
-        Mul { exprs }
+        Mul {
+            exprs: exprs
+                .into_iter()
+                .filter(|x| {
+                    if let Expr::Num(n) = x {
+                        n.num != 1
+                    } else {
+                        true
+                    }
+                })
+                .collect::<Vec<Expr>>(),
+        }
     }
 
     /// Mul(x1,x1,x3)->Mul(Pow(x1,2),x3) otherwise crash
