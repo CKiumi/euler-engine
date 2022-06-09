@@ -1,5 +1,5 @@
 pub mod lexer;
-use crate::{Add, Expr, Mul, Num, Pow, Sym};
+use crate::{Expr, Pow, Sym};
 use lexer::{Lexer, Token};
 mod serializer;
 pub use serializer::serialize;
@@ -13,8 +13,14 @@ impl<'a> Parser<'a> {
         Parser { lexer }
     }
     pub fn parse(&mut self, end_token: &Token) -> Expr<'a> {
-        let mut expr = Expr::Num(Num::new(i32::MAX));
-        let mut last_token = Token::Eof;
+        let first_token = self.lexer.next_token();
+        let mut expr = match first_token {
+            Token::Sym(slice) => Expr::Sym(Sym::new(slice)),
+            Token::Num(num) => Expr::Num(num),
+            Token::Eof => return Expr::Sym(Sym::new("")),
+            _ => panic!("Unexpected first token"),
+        };
+        let mut last_token = first_token;
         let mut is_last = false;
         while !is_last {
             let next_token = self.lexer.next_token();
@@ -38,20 +44,16 @@ impl<'a> Parser<'a> {
                     };
                 }
                 Token::Sym(slice) => {
+                    let sym = Expr::Sym(Sym::new(slice));
                     if let Token::AddInfix = last_token {
-                        expr = expr + Expr::Sym(Sym::new(slice));
+                        expr = expr + sym;
                     } else {
                         expr = match expr {
                             Expr::Add(mut add) => {
                                 let last = add.exprs.pop().unwrap();
-                                Expr::Add(
-                                    Add::new(add.exprs) + Mul::new(vec![last]) * Sym::new(slice),
-                                )
+                                Expr::Add(add) + last * sym
                             }
-                            expr => match expr {
-                                Expr::Num(n) if n.num == i32::MAX => Expr::Sym(Sym::new(slice)),
-                                _ => expr * Expr::Sym(Sym::new(slice)),
-                            },
+                            expr => expr * sym,
                         }
                     }
                     last_token = next_token;
@@ -60,10 +62,7 @@ impl<'a> Parser<'a> {
                     if let Token::AddInfix = last_token {
                         expr = expr + Expr::Num(num);
                     } else {
-                        expr = match expr {
-                            Expr::Num(n) if n.num == i32::MAX => Expr::Num(num),
-                            _ => panic!("Number comes first or after +"),
-                        }
+                        panic!("Number comes first or after +");
                     }
                     last_token = next_token;
                 }
@@ -95,11 +94,12 @@ fn test_parser() {
         latex_to_expr("ab+b\\alpha sdas+x").to_string(),
         "a*b+b*\\alpha*s*d*a*s+x"
     );
-    assert_eq!(latex_to_expr("").to_string(), "2147483647");
+    assert_eq!(latex_to_expr("").to_string(), "");
     assert_eq!(latex_to_expr("b^{a}").to_string(), "b^{a}");
     assert_eq!(latex_to_expr("b_{a}").to_string(), "b_{a}");
     assert_eq!(latex_to_expr("b_{a}^{c}").to_string(), "b_{a}^{c}");
     assert_eq!(latex_to_expr("2a").to_string(), "2*a");
     assert_eq!(latex_to_expr("23a").to_string(), "23*a");
     assert_eq!(latex_to_expr("23a+23a").to_string(), "23*a+23*a");
+    assert_eq!(latex_to_expr("x^2+x^2").to_string(), "x^2+x^2");
 }
