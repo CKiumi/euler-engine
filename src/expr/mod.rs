@@ -115,6 +115,39 @@ impl<'a> std::ops::Mul<Expr<'a>> for Expr<'a> {
     }
 }
 
+impl<'a> std::ops::BitXor<Expr<'a>> for Expr<'a> {
+    type Output = Expr<'a>;
+    fn bitxor(self, rhs: Expr<'a>) -> Self::Output {
+        match (self, rhs) {
+            (Expr::Num(x), Expr::Num(y)) => Expr::Num(x ^ y),
+            (Expr::Num(x), Expr::Sym(y)) => Expr::Pow(x ^ y),
+            (Expr::Num(x), Expr::Add(y)) => Expr::Pow(x ^ y),
+            (Expr::Num(x), Expr::Mul(y)) => Expr::Pow(x ^ y),
+            (Expr::Num(x), Expr::Pow(y)) => Expr::Pow(x ^ y),
+            (Expr::Sym(x), Expr::Num(y)) => Expr::Pow(x ^ y),
+            (Expr::Sym(x), Expr::Sym(y)) => Expr::Pow(x ^ y),
+            (Expr::Sym(x), Expr::Add(y)) => Expr::Pow(x ^ y),
+            (Expr::Sym(x), Expr::Mul(y)) => Expr::Pow(x ^ y),
+            (Expr::Sym(x), Expr::Pow(y)) => Expr::Pow(x ^ y),
+            (Expr::Add(x), Expr::Num(y)) => Expr::Pow(x ^ y),
+            (Expr::Add(x), Expr::Sym(y)) => Expr::Pow(x ^ y),
+            (Expr::Add(x), Expr::Add(y)) => Expr::Pow(x ^ y),
+            (Expr::Add(x), Expr::Mul(y)) => Expr::Pow(x ^ y),
+            (Expr::Add(x), Expr::Pow(y)) => Expr::Pow(x ^ y),
+            (Expr::Mul(x), Expr::Num(y)) => Expr::Pow(x ^ y),
+            (Expr::Mul(x), Expr::Sym(y)) => Expr::Pow(x ^ y),
+            (Expr::Mul(x), Expr::Add(y)) => Expr::Pow(x ^ y),
+            (Expr::Mul(x), Expr::Mul(y)) => Expr::Pow(x ^ y),
+            (Expr::Mul(x), Expr::Pow(y)) => Expr::Pow(x ^ y),
+            (Expr::Pow(x), Expr::Num(y)) => Expr::Pow(x ^ y),
+            (Expr::Pow(x), Expr::Sym(y)) => Expr::Pow(x ^ y),
+            (Expr::Pow(x), Expr::Add(y)) => Expr::Pow(x ^ y),
+            (Expr::Pow(x), Expr::Mul(y)) => Expr::Pow(x ^ y),
+            (Expr::Pow(x), Expr::Pow(y)) => Expr::Pow(x ^ y),
+        }
+    }
+}
+
 impl<'a> Display for Expr<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {

@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
                 Token::AddInfix => {}
                 Token::Circumflex => {
                     expr = match expr {
-                        Expr::Sym(sym) => Expr::Pow(Pow::new(Expr::Sym(sym), self.parse_arg())),
+                        Expr::Sym(sym) => Expr::Sym(sym) ^ self.parse_arg(),
                         Expr::Add(mut add) => {
                             let last = add.exprs.pop().unwrap();
                             match last {
@@ -48,9 +48,40 @@ impl<'a> Parser<'a> {
                     };
                 }
                 Token::UnderScore => {
-                    expr = match last_token {
-                        Token::Sym(sym) => {
-                            Expr::Sym(Sym::new(sym).set_sub(self.lexer.arg_to_string()))
+                    expr = match expr {
+                        Expr::Sym(mut sym) => Expr::Sym(sym.set_sub(self.lexer.arg_to_string())),
+                        Expr::Mul(mut mul) => {
+                            let last = mul.exprs.pop().unwrap();
+                            match last {
+                                Expr::Sym(mut sym) => {
+                                    Expr::Mul(mul)
+                                        * Expr::Sym(sym.set_sub(self.lexer.arg_to_string()))
+                                }
+                                _ => unimplemented!(),
+                            }
+                        }
+                        Expr::Add(mut add) => {
+                            let last = add.exprs.pop().unwrap();
+                            match last {
+                                Expr::Sym(mut sym) => {
+                                    Expr::Add(add)
+                                        + Expr::Sym(sym.set_sub(self.lexer.arg_to_string()))
+                                }
+                                Expr::Mul(mut mul) => {
+                                    let last = mul.exprs.pop().unwrap();
+                                    match last {
+                                        Expr::Sym(mut sym) => {
+                                            Expr::Add(add)
+                                                + Expr::Mul(mul)
+                                                    * Expr::Sym(
+                                                        sym.set_sub(self.lexer.arg_to_string()),
+                                                    )
+                                        }
+                                        _ => panic!("Underscore must come after symbol"),
+                                    }
+                                }
+                                _ => panic!("Underscore must come after symbol"),
+                            }
                         }
                         _ => panic!("Underscore must come after symbol"),
                     };
@@ -109,6 +140,10 @@ fn test_parser() {
         ["23a+23a", "23*a+23*a"],
         ["x^{2}+x^{2}", "x^{2}+x^{2}"],
         ["2x^{2}+2x^{2}", "2*x^{2}+2*x^{2}"],
+        ["2x^{x+y}+2x^{xy}", "2*x^{x+y}+2*x^{x*y}"],
+        ["2x_{2}^{2}", "2*x_{2}^{2}"],
+        ["a_{b}^{c}+d_{e}^{f}", "a_{b}^{c}+d_{e}^{f}"],
+        ["a_{b}^{c}+xd_{e}^{f}", "a_{b}^{c}+x*d_{e}^{f}"],
     ];
     tests.iter().for_each(|test| {
         assert_eq!(latex_to_expr(test[0]).to_string(), test[1]);
