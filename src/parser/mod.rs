@@ -24,14 +24,26 @@ impl<'a> Parser<'a> {
         let mut is_last = false;
         while !is_last {
             let next_token = self.lexer.next_token();
-            match next_token {
-                token if token == *end_token => is_last = true,
-                Token::AddInfix => {
-                    last_token = Token::AddInfix;
-                }
+            match &next_token {
+                token if *token == *end_token => is_last = true,
+                Token::AddInfix => {}
                 Token::Circumflex => {
                     expr = match expr {
                         Expr::Sym(sym) => Expr::Pow(Pow::new(Expr::Sym(sym), self.parse_arg())),
+                        Expr::Add(mut add) => {
+                            let last = add.exprs.pop().unwrap();
+                            match last {
+                                Expr::Mul(mut mul) => {
+                                    let last = mul.exprs.pop().unwrap();
+                                    Expr::Add(add + mul * Pow::new(last, self.parse_arg()))
+                                }
+                                _ => Expr::Add(add + Pow::new(last, self.parse_arg())),
+                            }
+                        }
+                        Expr::Mul(mut mul) => {
+                            let last = mul.exprs.pop().unwrap();
+                            Expr::Mul(mul * Pow::new(last, self.parse_arg()))
+                        }
                         _ => unimplemented!(),
                     };
                 }
@@ -40,35 +52,30 @@ impl<'a> Parser<'a> {
                         Token::Sym(sym) => {
                             Expr::Sym(Sym::new(sym).set_sub(self.lexer.arg_to_string()))
                         }
-                        _ => unimplemented!(),
+                        _ => panic!("Underscore must come after symbol"),
                     };
                 }
                 Token::Sym(slice) => {
                     let sym = Expr::Sym(Sym::new(slice));
-                    if let Token::AddInfix = last_token {
-                        expr = expr + sym;
-                    } else {
-                        expr = match expr {
+                    expr = match last_token {
+                        Token::AddInfix => expr + sym,
+                        _ => match expr {
                             Expr::Add(mut add) => {
                                 let last = add.exprs.pop().unwrap();
                                 Expr::Add(add) + last * sym
                             }
                             expr => expr * sym,
-                        }
+                        },
                     }
-                    last_token = next_token;
                 }
-                Token::Num(num) => {
-                    if let Token::AddInfix = last_token {
-                        expr = expr + Expr::Num(num);
-                    } else {
-                        panic!("Number comes first or after +");
-                    }
-                    last_token = next_token;
-                }
+                Token::Num(num) => match last_token {
+                    Token::AddInfix => expr = expr + Expr::Num(*num),
+                    _ => panic!("Number comes first or after +"),
+                },
 
                 _ => unimplemented!(),
             };
+            last_token = next_token;
         }
         expr
     }
@@ -87,19 +94,23 @@ pub fn latex_to_expr(latex: &str) -> Expr {
 }
 #[test]
 fn test_parser() {
-    assert_eq!(latex_to_expr("aaaa").to_string(), "a*a*a*a");
-    assert_eq!(latex_to_expr("a+a+a").to_string(), "a+a+a");
-    assert_eq!(latex_to_expr("a+bc").to_string(), "a+b*c");
-    assert_eq!(
-        latex_to_expr("ab+b\\alpha sdas+x").to_string(),
-        "a*b+b*\\alpha*s*d*a*s+x"
-    );
-    assert_eq!(latex_to_expr("").to_string(), "");
-    assert_eq!(latex_to_expr("b^{a}").to_string(), "b^{a}");
-    assert_eq!(latex_to_expr("b_{a}").to_string(), "b_{a}");
-    assert_eq!(latex_to_expr("b_{a}^{c}").to_string(), "b_{a}^{c}");
-    assert_eq!(latex_to_expr("2a").to_string(), "2*a");
-    assert_eq!(latex_to_expr("23a").to_string(), "23*a");
-    assert_eq!(latex_to_expr("23a+23a").to_string(), "23*a+23*a");
-    assert_eq!(latex_to_expr("x^2+x^2").to_string(), "x^2+x^2");
+    let tests = [
+        ["aaaa", "a*a*a*a"],
+        ["a+a+a", "a+a+a"],
+        ["a+bc", "a+b*c"],
+        ["ab+b\\alpha sdas+x", "a*b+b*\\alpha*s*d*a*s+x"],
+        ["aaaa", "a*a*a*a"],
+        ["", ""],
+        ["b^{a}", "b^{a}"],
+        ["b_{a}", "b_{a}"],
+        ["b_{a}^{c}", "b_{a}^{c}"],
+        ["2a", "2*a"],
+        ["23a", "23*a"],
+        ["23a+23a", "23*a+23*a"],
+        ["x^{2}+x^{2}", "x^{2}+x^{2}"],
+        ["2x^{2}+2x^{2}", "2*x^{2}+2*x^{2}"],
+    ];
+    tests.iter().for_each(|test| {
+        assert_eq!(latex_to_expr(test[0]).to_string(), test[1]);
+    });
 }
