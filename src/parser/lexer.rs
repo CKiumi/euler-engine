@@ -2,18 +2,23 @@ use crate::Num;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Token<'a> {
-    AddInfix,
-    MultiInfix,
+    Infix(Infix),
     LCurlyBrace,
     RCurlyBrace,
     RParen,
     LParen,
-    Circumflex,
-    UnderScore,
     Num(Num),
     Sym(&'a str),
     Error(&'a str),
     Eof,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum Infix {
+    Add,
+    Mul,
+    Underscore,
+    Circumflex,
 }
 
 #[derive(Debug, Clone)]
@@ -46,12 +51,12 @@ impl<'a> Lexer<'a> {
     pub fn next_token(&mut self) -> Token<'a> {
         self.skip_whitespace();
         let token = match self.cur() {
-            '+' => Token::AddInfix,
-            '*' => Token::MultiInfix,
+            '+' => Token::Infix(Infix::Add),
+            '*' => Token::Infix(Infix::Mul),
             '{' => Token::LCurlyBrace,
             '}' => Token::RCurlyBrace,
-            '^' => Token::Circumflex,
-            '_' => Token::UnderScore,
+            '^' => Token::Infix(Infix::Circumflex),
+            '_' => Token::Infix(Infix::Underscore),
             '\u{0}' => return Token::Eof,
             '\\' => return self.read_command(),
             c if c.is_ascii_alphabetic() => Token::Sym(&self.input[self.cursor..self.cursor + 1]),
@@ -123,7 +128,7 @@ fn test_lexer() {
     assert_eq!(lexer.next_token(), Token::RCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("a"));
     assert_eq!(lexer.next_token(), Token::Sym("b"));
-    assert_eq!(lexer.next_token(), Token::AddInfix);
+    assert_eq!(lexer.next_token(), Token::Infix(Infix::Add));
     assert_eq!(lexer.next_token(), Token::Num(Num::new(32)));
     assert_eq!(lexer.next_token(), Token::RParen);
     assert_eq!(lexer.next_token(), Token::Sym("c"));
