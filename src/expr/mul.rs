@@ -51,7 +51,6 @@ impl<'a> Mul<'a> {
             expr => body.push(expr.clone()),
         });
         body[0] = Expr::Num(coef);
-
         Mul::new(body).to_pow()
     }
 }

@@ -12,4 +12,4 @@ dependencies = ["test"]
 [tasks.update]
 description = "Build wasm and update package"
 script = "cd pkg && yarn pack && mv euler-engine*.tgz ../../euler-editor/pkg"
-# dependencies = ["build"]
+dependencies = ["build"]

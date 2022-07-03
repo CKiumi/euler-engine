@@ -8,6 +8,8 @@ use wasm_bindgen::prelude::*;
 pub fn collect(input: String) -> String {
     match latex_to_expr(&input) {
         Expr::Add(add) => serialize(&Expr::Add(add.collect())),
+        Expr::Mul(mul) => serialize(&Expr::Mul(mul.collect())),
+        Expr::Num(num) => serialize(&Expr::Num(num)),
         _ => input,
     }
 }
