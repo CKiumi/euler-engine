@@ -34,5 +34,5 @@ fn test_num() {
     let x = Expr::Num(Num::new(1));
     let y = Expr::Num(Num::new(2));
     assert_eq!((x + y).to_string(), "1+2");
-    assert_eq!((Num::new(3) ^ Num::new(3)).to_string(), "27");
+    assert_eq!((Num::new(3) ^ Num::new(3)).to_string(), "3^{3}");
 }

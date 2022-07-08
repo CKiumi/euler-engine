@@ -1,9 +1,36 @@
 use super::{Add, Expr, Mul, Num, Pow, Sym};
 use std::ops::BitXor;
 
-/// Overload ^ operator
-macro_rules! impl_ops_pow {
-    ($x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?) => {
+macro_rules! impl_ops_add {
+    ($($x:ident$(< $ltx:tt >)?)*) => {
+        impl_ops_add!(@step1, $($x$(< $ltx >)?)*; $($x$(< $ltx >)?)*);
+    };
+
+    (@step1,$head:ident$(< $lth:tt >)?$($tail:ident$(< $ltt:tt >)?)* ;$($y:ident$(< $lty:tt >)?)*) => {
+        impl_ops_add!(@step1,$($tail$(< $ltt >)?)* ;$($y$(< $lty >)?)*);
+        impl_ops_add!(@step2,$head$(< $lth >)?;$($y$(< $lty >)?)*);
+    };
+
+    (@step1, ;$($y:ident$(< $lty:tt >)?)*) => {};
+
+    (@step2,$x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?$($z:ident$(< $ltz:tt >)?)*) => {
+        impl_ops_add!(@step2,$x$(< $ltx >)?;$($z$(< $ltz >)?)*);
+        impl_ops_add!(@impl,$x$(< $ltx >)?;$y$(< $lty >)?);
+    };
+
+    (@step2,$x:ident$(< $ltx:tt >)?;)=>{};
+
+    //Num + Num
+    (@impl,$x:ident;$y:ident) => {
+        impl BitXor for $x {
+            type Output = Pow<'static>;
+            fn bitxor(self, rhs: $y) -> Self::Output {
+                Pow::new(Expr::$x(self), Expr::$y(rhs))
+            }
+        }
+    };
+
+    (@impl,$x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?) => {
         impl <'a> BitXor<$y$(<$lty>)?> for $x$(<$ltx>)? {
             type Output = Pow<'a>;
             fn bitxor(self, rhs: $y$(< $lty >)?) -> Self::Output {
@@ -11,21 +38,6 @@ macro_rules! impl_ops_pow {
             }
         }
     };
-    ($x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?,$($z:ident$(< $ltz:tt >)?),*) => {
-            impl_ops_pow!($x$(< $ltx >)?;$y$(< $lty >)?);
-            impl_ops_pow!($x$(< $ltx >)?;$($z$(< $ltz >)?),*);
-    };
 }
 
-impl_ops_pow!(Sym<'a>; Sym<'a>,Pow<'a>,Add<'a>,Mul<'a>,Num);
-impl_ops_pow!(Add<'a>; Sym<'a>,Pow<'a>,Add<'a>,Mul<'a>,Num);
-impl_ops_pow!(Mul<'a>; Sym<'a>,Pow<'a>,Add<'a>,Mul<'a>,Num);
-impl_ops_pow!(Pow<'a>; Sym<'a>,Pow<'a>,Add<'a>,Mul<'a>,Num);
-impl_ops_pow!(Num; Sym<'a>,Pow<'a>,Add<'a>,Mul<'a>);
-
-impl BitXor<Num> for Num {
-    type Output = Num;
-    fn bitxor<'a>(self, rhs: Num) -> Self::Output {
-        Num::new(self.num.pow(rhs.num as u32))
-    }
-}
+impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Mul<'a> Num);
