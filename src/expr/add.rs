@@ -1,8 +1,8 @@
 use super::Expr;
+use crate::Num;
 use std::fmt::{Display, Formatter, Result};
-use std::ops;
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Add<'a> {
     pub exprs: Vec<Expr<'a>>,
 }
@@ -33,26 +33,25 @@ impl<'a> Add<'a> {
                 let (co1, body1) = self.exprs[i].collect().detach_coeff();
                 let (co2, body2) = result[j].collect().detach_coeff();
                 if body1 == body2 {
-                    match co1 + co2 {
-                        x if x.num == 0 => {
+                    match co1.num + co2.num {
+                        x if x == 0 => {
                             result.remove(j);
                         }
-                        x => result[j] = Expr::Mul(x * body1.clone()),
+                        x => {
+                            result[j] = if let Some(mul) = body1 {
+                                Expr::Mul(Num::new(x) * mul.clone())
+                            } else {
+                                Expr::Num(Num::new(x))
+                            }
+                        }
                     };
                     break;
                 } else if j == result.len() - 1 {
-                    result.push(Expr::Mul(co1 * body1.clone()));
+                    result.push(self.exprs[i].clone());
                 }
             }
         });
         Add::new(result)
-    }
-}
-
-impl<'a> ops::Add<Add<'a>> for Add<'a> {
-    type Output = Add<'a>;
-    fn add(self, mut _rhs: Add<'a>) -> Add<'a> {
-        Add::new([self.exprs, _rhs.exprs].concat())
     }
 }
 
@@ -88,6 +87,7 @@ mod test_add {
 
         assert_eq!(((x + y) ^ x).to_string(), "(x+y)^{x}");
         assert_eq!((((x ^ y) + y + x) ^ x).to_string(), "(x^{y}+y+x)^{x}");
+        assert_eq!((n2 + n2).collect().to_string(), "4");
         assert_eq!((x + y + y).collect().to_string(), "x+2*y");
         assert_eq!((x + y + z).collect().to_string(), "x+y+z");
         assert_eq!(

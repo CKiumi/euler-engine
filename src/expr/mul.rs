@@ -1,7 +1,7 @@
 use super::{num::Num, pow::Pow, Expr};
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Mul<'a> {
     pub exprs: Vec<Expr<'a>>,
 }
@@ -31,7 +31,7 @@ impl<'a> Mul<'a> {
                 let (body1, pow1) = self.exprs[i].detach_pow();
                 let (body2, pow2) = result[j].detach_pow();
                 if body1 == body2 {
-                    result[j] = Expr::Pow(Pow::new(body1, pow1 + pow2));
+                    result[j] = Expr::Pow(Pow::new(body1, (pow1 + pow2).collect()));
                     break;
                 } else if j == result.len() - 1 {
                     result.push(self.exprs[i].clone())
