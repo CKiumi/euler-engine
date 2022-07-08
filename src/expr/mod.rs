@@ -20,21 +20,6 @@ pub enum Expr<'a> {
     Pow(Pow<'a>),
 }
 
-macro_rules! match_all_pairs {
-    ($a:ident,$b:ident, $($x:ident)*) => {
-        match_all_pairs!(@inner,$a,$b,$($x)*; $($x)*;)
-    };
-    (@inner,$a:ident,$b:ident, $head:ident $($tail:ident)*; $($x:ident)*;$($arm:tt)*) => {
-        match_all_pairs!(@inner,$a,$b, $($tail)*; $($x)*;
-        $($arm)* $((Expr::$head(x), Expr::$x(y))=>{Expr::Add(x+y)},)*)
-    };
-    (@inner,$a:ident,$b:ident, ;$($x:ident)*; $($arm:tt)*) => {
-        match ($a,$b){
-            $($arm)*
-        }
-    };
-}
-
 impl<'a> Expr<'a> {
     fn collect(&self) -> Self {
         match self {
@@ -65,45 +50,38 @@ impl<'a> Expr<'a> {
     }
 }
 
-impl<'a> std::ops::Add<Expr<'a>> for Expr<'a> {
-    type Output = Expr<'a>;
-    fn add(self, _rhs: Expr<'a>) -> Expr {
-        match_all_pairs!(self,_rhs,Num Sym Add Mul Pow)
-    }
+macro_rules! match_all_pairs {
+    ($($x:ident)*) => {
+        match_all_pairs!(@add,$($x)*; $($x)*;);
+        match_all_pairs!(@mul,$($x)*; $($x)*;);
+    };
+    (@add, $head:ident $($tail:ident)*; $($x:ident)*;$($arm:tt)*) => {
+        match_all_pairs!(@add, $($tail)*; $($x)*;
+        $($arm)* $((Expr::$head(x), Expr::$x(y))=>{Expr::Add(x+y)},)*);
+    };
+    (@mul, $head:ident $($tail:ident)*; $($x:ident)*;$($arm:tt)*) => {
+        match_all_pairs!(@mul, $($tail)*; $($x)*;
+        $($arm)* $((Expr::$head(x), Expr::$x(y))=>{Expr::Mul(x*y)},)*);
+    };
+    (@add, ;$($x:ident)*; $($arm:tt)*) => {
+        impl<'a> std::ops::Add<Expr<'a>> for Expr<'a> {
+            type Output = Expr<'a>;
+            fn add(self, _rhs: Expr<'a>) -> Expr {
+                match (self,_rhs){$($arm)*}
+            }
+        }
+    };
+    (@mul, ;$($x:ident)*; $($arm:tt)*) => {
+        impl<'a> std::ops::Mul<Expr<'a>> for Expr<'a> {
+            type Output = Expr<'a>;
+            fn mul(self, _rhs: Expr<'a>) -> Expr {
+                match (self,_rhs){$($arm)*}
+            }
+        }
+    };
 }
 
-impl<'a> std::ops::Mul<Expr<'a>> for Expr<'a> {
-    type Output = Expr<'a>;
-    fn mul(self, rhs: Expr<'a>) -> Self::Output {
-        match (self, rhs) {
-            (Expr::Num(x), Expr::Num(y)) => Expr::Num(x * y),
-            (Expr::Num(x), Expr::Sym(y)) => Expr::Mul(x * y),
-            (Expr::Num(x), Expr::Add(y)) => Expr::Mul(x * y),
-            (Expr::Num(x), Expr::Mul(y)) => Expr::Mul(x * y),
-            (Expr::Num(x), Expr::Pow(y)) => Expr::Mul(x * y),
-            (Expr::Sym(x), Expr::Num(y)) => Expr::Mul(x * y),
-            (Expr::Sym(x), Expr::Sym(y)) => Expr::Mul(x * y),
-            (Expr::Sym(x), Expr::Add(y)) => Expr::Mul(x * y),
-            (Expr::Sym(x), Expr::Mul(y)) => Expr::Mul(x * y),
-            (Expr::Sym(x), Expr::Pow(y)) => Expr::Mul(x * y),
-            (Expr::Add(x), Expr::Num(y)) => Expr::Mul(x * y),
-            (Expr::Add(x), Expr::Sym(y)) => Expr::Mul(x * y),
-            (Expr::Add(x), Expr::Add(y)) => Expr::Mul(x * y),
-            (Expr::Add(x), Expr::Mul(y)) => Expr::Mul(x * y),
-            (Expr::Add(x), Expr::Pow(y)) => Expr::Mul(x * y),
-            (Expr::Mul(x), Expr::Num(y)) => Expr::Mul(x * y),
-            (Expr::Mul(x), Expr::Sym(y)) => Expr::Mul(x * y),
-            (Expr::Mul(x), Expr::Add(y)) => Expr::Mul(x * y),
-            (Expr::Mul(x), Expr::Mul(y)) => Expr::Mul(x * y),
-            (Expr::Mul(x), Expr::Pow(y)) => Expr::Mul(x * y),
-            (Expr::Pow(x), Expr::Num(y)) => Expr::Mul(x * y),
-            (Expr::Pow(x), Expr::Sym(y)) => Expr::Mul(x * y),
-            (Expr::Pow(x), Expr::Add(y)) => Expr::Mul(x * y),
-            (Expr::Pow(x), Expr::Mul(y)) => Expr::Mul(x * y),
-            (Expr::Pow(x), Expr::Pow(y)) => Expr::Mul(x * y),
-        }
-    }
-}
+match_all_pairs!(Num Sym Add Mul Pow);
 
 impl<'a> std::ops::BitXor<Expr<'a>> for Expr<'a> {
     type Output = Expr<'a>;

@@ -2,6 +2,13 @@ use super::{Add, Expr, Mul, Num, Pow, Sym};
 use std::ops;
 /// Overload * operator
 macro_rules! impl_ops_mul_with_mul {
+    ($($y:ident$(< $lty:tt >)?),*) => {
+        $(
+           impl_ops_mul_with_mul!(@left,$y$(< $lty >)?);
+           impl_ops_mul_with_mul!(@right,$y$(< $lty >)?);
+        )*
+    };
+
     (@left,$x:ident$(< $ltx:tt >)?) => {
         impl<'a> ops::Mul<$x$(< $ltx >)?> for Mul<'a> {
             type Output = Mul<'a>;
@@ -10,6 +17,7 @@ macro_rules! impl_ops_mul_with_mul {
             }
         }
     };
+
     (@right,$x:ident$(< $ltx:tt >)?) => {
         impl<'a> ops::Mul<Mul<'a>> for $x$(< $ltx >)? {
             type Output = Mul<'a>;
@@ -18,41 +26,8 @@ macro_rules! impl_ops_mul_with_mul {
             }
         }
     };
-    ($($y:ident$(< $lty:tt >)?),*) => {
-     $(
-        impl_ops_mul_with_mul!(@left,$y$(< $lty >)?);
-        impl_ops_mul_with_mul!(@right,$y$(< $lty >)?);
-     )*
-};
 }
 impl_ops_mul_with_mul!(Sym<'a>, Pow<'a>, Add<'a>, Num);
-
-macro_rules! impl_ops_mul {
-    ($x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?) => {
-        impl <'a> ops::Mul<$y$(<$lty>)?> for $x$(<$ltx>)? {
-            type Output = Mul<'a>;
-            fn mul(self, rhs: $y$(< $lty >)?) -> Self::Output {
-                Mul::new(vec![Expr::$x(self), Expr::$y(rhs)])
-            }
-        }
-    };
-    ($x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?,$($z:ident$(< $ltz:tt >)?),*) => {
-        impl_ops_mul!($x$(< $ltx >)?;$y$(< $lty >)?);
-        impl_ops_mul!($x$(< $ltx >)?;$($z$(< $ltz >)?),*);
-    };
-}
-
-impl_ops_mul!(Sym<'a>; Sym<'a>,Pow<'a>,Add<'a>,Num);
-impl_ops_mul!(Add<'a>; Sym<'a>,Pow<'a>,Add<'a>,Num);
-impl_ops_mul!(Pow<'a>; Sym<'a>,Pow<'a>,Add<'a>,Num);
-impl_ops_mul!(Num; Sym<'a>,Pow<'a>,Add<'a>);
-
-impl ops::Mul<Num> for Num {
-    type Output = Num;
-    fn mul<'a>(self, rhs: Num) -> Self::Output {
-        Num::new(self.num * rhs.num)
-    }
-}
 
 impl<'a> ops::Mul<Mul<'a>> for Mul<'a> {
     type Output = Mul<'a>;
@@ -60,6 +35,47 @@ impl<'a> ops::Mul<Mul<'a>> for Mul<'a> {
         Mul::new(vec![self.exprs, rhs.exprs].concat())
     }
 }
+
+macro_rules! impl_ops_add {
+    ($($x:ident$(< $ltx:tt >)?)*) => {
+        impl_ops_add!(@step1, $($x$(< $ltx >)?)*; $($x$(< $ltx >)?)*);
+    };
+
+    (@step1,$head:ident$(< $lth:tt >)?$($tail:ident$(< $ltt:tt >)?)* ;$($y:ident$(< $lty:tt >)?)*) => {
+        impl_ops_add!(@step1,$($tail$(< $ltt >)?)* ;$($y$(< $lty >)?)*);
+        impl_ops_add!(@step2,$head$(< $lth >)?;$($y$(< $lty >)?)*);
+    };
+
+    (@step1, ;$($y:ident$(< $lty:tt >)?)*) => {};
+
+    (@step2,$x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?$($z:ident$(< $ltz:tt >)?)*) => {
+        impl_ops_add!(@step2,$x$(< $ltx >)?;$($z$(< $ltz >)?)*);
+        impl_ops_add!(@impl,$x$(< $ltx >)?;$y$(< $lty >)?);
+    };
+
+    (@step2,$x:ident$(< $ltx:tt >)?;)=>{};
+
+    //Num + Num
+    (@impl,$x:ident;$y:ident) => {
+        impl ops::Mul for $x {
+            type Output = Mul<'static>;
+            fn mul(self, rhs: $y) -> Self::Output {
+                Mul::new(vec![Expr::$x(self), Expr::$y(rhs)])
+            }
+        }
+    };
+
+    (@impl,$x:ident$(< $ltx:tt >)?;$y:ident$(< $lty:tt >)?) => {
+        impl <'a> ops::Mul<$y$(<$lty>)?> for $x$(<$ltx>)? {
+            type Output = Mul<'a>;
+            fn mul(self, rhs: $y$(< $lty >)?) -> Self::Output {
+                Mul::new(vec![Expr::$x(self), Expr::$y(rhs)])
+            }
+        }
+    };
+}
+
+impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Num);
 
 #[test]
 fn test_mul_ops() {

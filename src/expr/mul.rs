@@ -47,7 +47,7 @@ impl<'a> Mul<'a> {
         let mut coef = Num::new(1);
         let mut body = vec![Expr::Num(Num::new(1))];
         self.exprs.iter().for_each(|expr| match expr {
-            Expr::Num(n) => coef = coef * *n,
+            Expr::Num(n) => coef = Num::new(coef.num * n.num),
             expr => body.push(expr.clone()),
         });
         body[0] = Expr::Num(coef);
