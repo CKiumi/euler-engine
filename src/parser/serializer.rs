@@ -20,6 +20,7 @@ pub fn serialize(expr: &Expr) -> String {
             result
         }
         Expr::Pow(pow) => format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow)),
+        Expr::Par(paren) => format!("\\left({}\\right)", serialize(&paren.inner)),
         Expr::Sym(x) => format!("{} ", x),
         Expr::Num(x) if x.num == -1 => String::from("-"),
         Expr::Num(x) => x.to_string(),

@@ -1,4 +1,4 @@
 mod add;
 mod mul;
 mod pow;
-use super::{Add, Expr, Mul, Num, Pow, Sym};
+use super::{Add, Expr, Mul, Num, Par, Pow, Sym};

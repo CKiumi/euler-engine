@@ -1,4 +1,4 @@
-use super::{Add, Expr, Mul, Num, Pow, Sym};
+use super::{Add, Expr, Mul, Num, Par, Pow, Sym};
 use std::ops;
 
 /// Overload + operator
@@ -30,7 +30,7 @@ macro_rules! impl_ops_add_with_add {
     };
 }
 
-impl_ops_add_with_add!(Sym<'a>, Pow<'a>, Mul<'a>, Num);
+impl_ops_add_with_add!(Sym<'a>, Pow<'a>, Mul<'a>, Par<'a>, Num);
 
 impl<'a> ops::Add<Add<'a>> for Add<'a> {
     type Output = Add<'a>;
@@ -78,4 +78,4 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym<'a> Pow<'a> Mul<'a> Num);
+impl_ops_add!(Sym<'a> Pow<'a> Mul<'a> Par<'a> Num );

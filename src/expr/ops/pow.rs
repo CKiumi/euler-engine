@@ -1,4 +1,4 @@
-use super::{Add, Expr, Mul, Num, Pow, Sym};
+use super::{Add, Expr, Mul, Num, Par, Pow, Sym};
 use std::ops::BitXor;
 
 macro_rules! impl_ops_add {
@@ -40,4 +40,4 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Mul<'a> Num);
+impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Mul<'a> Par<'a> Num);

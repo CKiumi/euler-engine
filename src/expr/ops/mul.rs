@@ -1,4 +1,4 @@
-use super::{Add, Expr, Mul, Num, Pow, Sym};
+use super::{Add, Expr, Mul, Num, Par, Pow, Sym};
 use std::ops;
 /// Overload * operator
 macro_rules! impl_ops_mul_with_mul {
@@ -27,7 +27,7 @@ macro_rules! impl_ops_mul_with_mul {
         }
     };
 }
-impl_ops_mul_with_mul!(Sym<'a>, Pow<'a>, Add<'a>, Num);
+impl_ops_mul_with_mul!(Sym<'a>, Pow<'a>, Add<'a>, Par<'a>, Num);
 
 impl<'a> ops::Mul<Mul<'a>> for Mul<'a> {
     type Output = Mul<'a>;
@@ -75,7 +75,7 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Num);
+impl_ops_add!(Sym<'a> Pow<'a> Add<'a> Par<'a> Num);
 
 #[test]
 fn test_mul_ops() {

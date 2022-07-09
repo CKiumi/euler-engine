@@ -1,5 +1,5 @@
 pub mod lexer;
-use crate::{Expr, Sym};
+use crate::{expr::Par, Expr, Sym};
 use lexer::{Lexer, Token};
 mod serializer;
 pub use serializer::serialize;
@@ -20,6 +20,7 @@ impl<'a> Parser<'a> {
         let mut expr_stack: Vec<Expr> = vec![match first_token {
             Token::Sym(slice) => Expr::Sym(Sym::new(slice)),
             Token::Num(num) => Expr::Num(num),
+            Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
             Token::Eof => return Expr::Sym(Sym::new("")),
             _ => panic!("Unexpected first token"),
         }];
@@ -31,6 +32,18 @@ impl<'a> Parser<'a> {
                         self.operate_infix(&mut expr_stack, &mut infix_stack);
                     }
                     break;
+                }
+                Token::LParen => {
+                    if expr_stack.len() == infix_stack.len() {
+                        expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
+                    } else {
+                        // Case of implicit mul
+                        while let Some(Infix::Circumflex) | Some(Infix::Mul) = infix_stack.last() {
+                            self.operate_infix(&mut expr_stack, &mut infix_stack);
+                        }
+                        expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
+                        infix_stack.push(Infix::Mul);
+                    }
                 }
                 Token::Infix(Infix::Add) => {
                     while let Some(Infix::Circumflex) | Some(Infix::Mul) | Some(Infix::Add) =
@@ -118,6 +131,10 @@ fn test_parser() {
         ["2x_{2}^{2}", "2*x_{2}^{2}"],
         ["a_{b}^{c}+d_{e}^{f}", "a_{b}^{c}+d_{e}^{f}"],
         ["a_{b}^{c}+xd_{e}^{f}", "a_{b}^{c}+x*d_{e}^{f}"],
+        ["\\left(a+b\\right)", "(a+b)"],
+        ["\\left(a+b\\right)+\\left(a+b\\right)", "(a+b)+(a+b)"],
+        ["\\left(a+b\\right)\\left(a+b\\right)", "(a+b)*(a+b)"],
+        ["\\left(a+b\\right)^{2}", "(a+b)^{2}"],
     ];
     tests.iter().for_each(|test| {
         assert_eq!(latex_to_expr(test[0]).to_string(), test[1]);

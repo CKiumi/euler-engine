@@ -26,7 +26,7 @@ impl<'a> Pow<'a> {
 
 impl<'a> Display for Pow<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        if let Expr::Sym(_) | Expr::Num(_) = *self.body {
+        if let Expr::Sym(_) | Expr::Num(_) | Expr::Par(_) = *self.body {
             write!(f, "{}", format_args!("{}^{{{}}}", self.body, self.pow))
         } else {
             write!(f, "{}", format_args!("({})^{{{}}}", self.body, self.pow))

@@ -2,11 +2,13 @@ mod add;
 mod mul;
 mod num;
 mod ops;
+mod par;
 mod pow;
 pub mod sym;
 pub use add::Add;
 pub use mul::Mul;
 pub use num::Num;
+pub use par::Par;
 pub use pow::Pow;
 use std::fmt::{Display, Formatter, Result};
 pub use sym::Sym;
@@ -18,6 +20,7 @@ pub enum Expr<'a> {
     Add(Add<'a>),
     Mul(Mul<'a>),
     Pow(Pow<'a>),
+    Par(Par<'a>),
 }
 
 impl<'a> Expr<'a> {
@@ -94,7 +97,7 @@ macro_rules! match_all_pairs {
     };
 }
 
-match_all_pairs!(Num Sym Add Mul Pow);
+match_all_pairs!(Num Sym Add Mul Pow Par);
 
 impl<'a> Display for Expr<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
@@ -104,6 +107,7 @@ impl<'a> Display for Expr<'a> {
             Expr::Mul(mul) => write!(f, "{}", mul),
             Expr::Num(num) => write!(f, "{}", num),
             Expr::Pow(pow) => write!(f, "{}", pow),
+            Expr::Par(paren) => write!(f, "{}", paren),
         }
     }
 }
