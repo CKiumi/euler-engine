@@ -2,7 +2,7 @@ use super::Expr;
 use crate::Num;
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Add<'a> {
     pub exprs: Vec<Expr<'a>>,
 }

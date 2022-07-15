@@ -4,6 +4,7 @@ A computer algebra system written in Rust. This library is used as a core comput
 
 <img src="./assets/demo.png">
 
+<img src="./assets/demo2.png">
 <br/>
 
 # Example

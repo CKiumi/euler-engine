@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter, Result};
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Sym<'a> {
     symbol: &'a str,
     sub: &'a str,

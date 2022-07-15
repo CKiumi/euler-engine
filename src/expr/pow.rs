@@ -1,7 +1,7 @@
 use super::{mul::Mul, Expr};
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Pow<'a> {
     pub body: Box<Expr<'a>>,
     pub pow: Box<Expr<'a>>,

@@ -1,6 +1,6 @@
 use super::Expr;
 use std::fmt::{Display, Formatter, Result};
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Par<'a> {
     pub inner: Box<Expr<'a>>,
 }

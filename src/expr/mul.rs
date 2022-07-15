@@ -1,7 +1,7 @@
-use super::{num::Num, pow::Pow, Expr};
+use super::{Add, Expr, Num, Par, Pow};
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Mul<'a> {
     pub exprs: Vec<Expr<'a>>,
 }
@@ -41,6 +41,21 @@ impl<'a> Mul<'a> {
         Mul::new(result)
     }
 
+    pub fn expand(&self) -> Par<'a> {
+        let mut res = self.exprs[0].to_terms();
+        for i in 1..self.exprs.len() {
+            let exprs1 = res.clone();
+            let exprs2 = self.exprs[i].to_terms();
+            res = vec![];
+            for e1 in exprs1 {
+                for e2 in &exprs2 {
+                    res.push((e1.clone() * e2.clone()).collect());
+                }
+            }
+        }
+        Par::new(Expr::Add(Add::new(res).collect()))
+    }
+
     /// Multi(x1,x1,num1,x3,num2)->Multi(num1*num2,Pow(x1,2),x3) otherwise Expr->Expr
     /// depend on multi_to_pow
     pub fn collect(&self) -> Self {
@@ -51,6 +66,7 @@ impl<'a> Mul<'a> {
             expr => body.push(expr.clone()),
         });
         body[0] = Expr::Num(coef);
+        body.sort();
         Mul::new(body).to_pow()
     }
 }
@@ -71,10 +87,24 @@ impl<'a> Display for Mul<'a> {
 
 #[test]
 fn test_mul() {
-    use super::{Num, Sym};
+    use super::{Num, Par, Sym};
     let x = Sym::new("x");
     let y = Sym::new("y");
     let n3 = Num::new(3);
     assert_eq!((x * y * y).to_pow().to_string(), "x*y^{2}");
     assert_eq!((x * y * n3 * y).collect().to_string(), "3*x*y^{2}");
+    let par = Par::new(Expr::Add(x + y));
+    assert_eq!((x * par.clone()).expand().to_string(), "(x^{2}+x*y)");
+    assert_eq!((par.clone() * x).expand().to_string(), "(x^{2}+x*y)");
+    assert_eq!((n3 * par.clone()).expand().to_string(), "(3*x+3*y)");
+    assert_eq!(
+        (par.clone() * par.clone()).expand().to_string(),
+        "(x^{2}+2*x*y+y^{2})"
+    );
+    assert_eq!(
+        (par.clone() * par.clone() * par.clone())
+            .expand()
+            .to_string(),
+        "(x^{3}+3*y*x^{2}+3*x*y^{2}+y^{3})"
+    );
 }

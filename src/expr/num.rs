@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 use crate::Expr;
-#[derive(Clone, Copy, PartialEq, Debug, Eq)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Debug, Eq)]
 pub struct Num {
     pub num: i32,
 }

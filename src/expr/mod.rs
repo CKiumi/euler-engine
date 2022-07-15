@@ -13,7 +13,7 @@ pub use pow::Pow;
 use std::fmt::{Display, Formatter, Result};
 pub use sym::Sym;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum Expr<'a> {
     Num(Num),
     Sym(Sym<'a>),
@@ -29,6 +29,20 @@ impl<'a> Expr<'a> {
             Expr::Add(add) => Expr::Add(add.collect()),
             Expr::Mul(mul) => Expr::Mul(mul.collect()),
             x => x.clone(),
+        }
+    }
+
+    pub fn expand(&self) -> Self {
+        match self {
+            Expr::Pow(pow) => match (&pow.body, &pow.pow) {
+                (box Expr::Par(par), box Expr::Num(num)) if num.num > 0 => {
+                    let res = Mul::new(vec![Expr::Par(par.clone()); num.num as usize]);
+                    Expr::Par(res.expand())
+                }
+                _ => unimplemented!(),
+            },
+            Expr::Mul(mul) => Expr::Par(mul.expand()),
+            _ => unimplemented!(),
         }
     }
 
@@ -49,6 +63,19 @@ impl<'a> Expr<'a> {
             },
             Expr::Num(num) => (*num, None),
             x => (Num::new(1), Some(Mul::new(vec![x.clone()]))),
+        }
+    }
+
+    /// Paren(Add(x1,...x_n))->[x1,...x_n] ,Paren(expr)->[expr]
+    /// Add(x1,...x_n)->[x1,...x_n], otherwise expr -> [expr]
+    fn to_terms(&self) -> Vec<Expr<'a>> {
+        match self {
+            Expr::Par(p) => match *p.inner.clone() {
+                Expr::Add(a) => a.exprs,
+                p => vec![p],
+            },
+            Expr::Add(a) => a.exprs.clone(),
+            _ => vec![self.clone()],
         }
     }
 }
@@ -122,4 +149,13 @@ fn test_expr() {
     assert_eq!(pow.detach_pow().1.to_string(), "y");
     assert_eq!(Expr::Sym(x).detach_pow().0.to_string(), "x");
     assert_eq!(Expr::Sym(x).detach_pow().1.to_string(), "1");
+    assert_eq!(
+        Expr::Pow(Pow::new(
+            Expr::Par(Par::new(Expr::Add(x + y))),
+            Expr::Num(Num::new(2))
+        ))
+        .expand()
+        .to_string(),
+        "(x^{2}+2*x*y+y^{2})"
+    );
 }
