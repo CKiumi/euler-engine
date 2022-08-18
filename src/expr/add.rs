@@ -47,7 +47,7 @@ impl<'a> Add<'a> {
                     };
                     break;
                 } else if j == result.len() - 1 {
-                    result.push(self.exprs[i].clone());
+                    result.push(self.exprs[i].collect().clone());
                 }
             }
         });

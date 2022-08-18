@@ -49,7 +49,7 @@ impl<'a> Mul<'a> {
             res = vec![];
             for e1 in exprs1 {
                 for e2 in &exprs2 {
-                    res.push((e1.clone() * e2.clone()).collect());
+                    res.push(e1.clone() * e2.clone());
                 }
             }
         }
@@ -66,8 +66,9 @@ impl<'a> Mul<'a> {
             expr => body.push(expr.clone()),
         });
         body[0] = Expr::Num(coef);
-        body.sort();
-        Mul::new(body).to_pow()
+        let mut res = Mul::new(body).to_pow();
+        res.exprs.sort();
+        res
     }
 }
 

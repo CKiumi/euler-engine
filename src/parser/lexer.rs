@@ -1,6 +1,6 @@
 use crate::Num;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Token<'a> {
     Infix(Infix),
     LCurlyBrace,
@@ -13,7 +13,7 @@ pub enum Token<'a> {
     Eof,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Infix {
     Add,
     Mul,
