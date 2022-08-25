@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter, Result};
 
 use crate::Expr;
+
+use super::ToExpr;
 #[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Debug, Eq)]
 pub struct Num {
     pub num: i32,
@@ -12,13 +14,9 @@ impl Num {
     }
 }
 
-pub trait AsExpr {
-    fn as_expr<'a>(&self) -> Expr<'a>;
-}
-
-impl AsExpr for Num {
-    fn as_expr<'a>(&self) -> Expr<'a> {
-        Expr::Num(*self)
+impl<'a> ToExpr<'a> for Num {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Num(self)
     }
 }
 

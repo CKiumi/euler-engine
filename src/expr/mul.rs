@@ -1,9 +1,15 @@
-use super::{Add, Expr, Num, Par, Pow};
+use super::{Add, Expr, Num, Par, Pow, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Mul<'a> {
     pub exprs: Vec<Expr<'a>>,
+}
+
+impl<'a> ToExpr<'a> for Mul<'a> {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Mul(self)
+    }
 }
 
 impl<'a> Mul<'a> {
@@ -94,7 +100,7 @@ fn test_mul() {
     let n3 = Num::new(3);
     assert_eq!((x * y * y).to_pow().to_string(), "x*y^{2}");
     assert_eq!((x * y * n3 * y).collect().to_string(), "3*x*y^{2}");
-    let par = Par::new(Expr::Add(x + y));
+    let par = Par::from(x + y);
     assert_eq!((x * par.clone()).expand().to_string(), "(x^{2}+x*y)");
     assert_eq!((par.clone() * x).expand().to_string(), "(x^{2}+x*y)");
     assert_eq!((n3 * par.clone()).expand().to_string(), "(3*x+3*y)");

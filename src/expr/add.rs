@@ -1,10 +1,16 @@
-use super::Expr;
+use super::{Expr, ToExpr};
 use crate::Num;
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Add<'a> {
     pub exprs: Vec<Expr<'a>>,
+}
+
+impl<'a> ToExpr<'a> for Add<'a> {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Add(self)
+    }
 }
 
 impl<'a> Add<'a> {

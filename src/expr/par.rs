@@ -1,14 +1,26 @@
-use super::Expr;
+use super::{Expr, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Par<'a> {
     pub inner: Box<Expr<'a>>,
 }
 
+impl<'a> ToExpr<'a> for Par<'a> {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Par(self)
+    }
+}
+
 impl<'a> Par<'a> {
     pub fn new(inner: Expr<'a>) -> Self {
         Par {
             inner: Box::new(inner),
+        }
+    }
+
+    pub fn from<T: ToExpr<'a>>(inner: T) -> Self {
+        Par {
+            inner: Box::new(inner.to_expr()),
         }
     }
 }

@@ -23,6 +23,10 @@ pub enum Expr<'a> {
     Par(Par<'a>),
 }
 
+pub trait ToExpr<'a> {
+    fn to_expr(self) -> Expr<'a>;
+}
+
 impl<'a> Expr<'a> {
     fn collect(&self) -> Self {
         match self {

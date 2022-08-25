@@ -1,8 +1,15 @@
+use super::{Expr, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Sym<'a> {
     symbol: &'a str,
     sub: &'a str,
+}
+
+impl<'a> ToExpr<'a> for Sym<'a> {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Sym(self)
+    }
 }
 
 impl<'a> Sym<'a> {

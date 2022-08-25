@@ -1,10 +1,16 @@
-use super::{mul::Mul, Expr};
+use super::{mul::Mul, Expr, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
 pub struct Pow<'a> {
     pub body: Box<Expr<'a>>,
     pub pow: Box<Expr<'a>>,
+}
+
+impl<'a> ToExpr<'a> for Pow<'a> {
+    fn to_expr(self) -> Expr<'a> {
+        Expr::Pow(self)
+    }
 }
 
 impl<'a> Pow<'a> {
@@ -15,11 +21,19 @@ impl<'a> Pow<'a> {
         }
     }
 }
+
 impl<'a> Pow<'a> {
     pub fn new(body: Expr<'a>, pow: Expr<'a>) -> Self {
         Pow {
             body: Box::new(body),
             pow: Box::new(pow),
+        }
+    }
+
+    pub fn from<E: ToExpr<'a>, F: ToExpr<'a>>(body: E, pow: F) -> Self {
+        Pow {
+            body: Box::new(body.to_expr()),
+            pow: Box::new(pow.to_expr()),
         }
     }
 }
@@ -39,18 +53,14 @@ fn test_pow() {
     use super::{Add, Num, Sym};
     let x = Sym::new("x");
     let y = Sym::new("y");
-    let pow = Pow::new(Expr::Sym(x), Expr::Sym(y));
+    let pow = Pow::from(x, y);
     assert_eq!(pow.to_string(), "x^{y}");
 
-    let pow = Pow::new(
-        Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
-        Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
+    let pow = Pow::from(
+        Add::new(vec![Expr::Sym(x), Expr::Sym(y)]),
+        Add::new(vec![Expr::Sym(x), Expr::Sym(y)]),
     );
     assert_eq!(pow.to_string(), "(x+y)^{x+y}");
-
-    let pow = Pow::new(
-        Expr::Add(Add::new(vec![Expr::Sym(x), Expr::Sym(y)])),
-        Expr::Num(Num::new(2)),
-    );
+    let pow = Pow::from(Add::new(vec![Expr::Sym(x), Expr::Sym(y)]), Num::new(2));
     assert_eq!(pow.to_mul().to_string(), "(x+y)*(x+y)");
 }
