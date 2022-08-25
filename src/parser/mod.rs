@@ -2,7 +2,9 @@ pub mod lexer;
 use crate::{expr::Par, Expr, Sym};
 use lexer::{Lexer, Token};
 mod serializer;
+mod sympy;
 pub use serializer::serialize;
+pub use sympy::latex_to_sympy;
 
 use self::lexer::Infix;
 pub struct Parser<'a> {
@@ -38,7 +40,7 @@ impl<'a> Parser<'a> {
                         expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
                     } else {
                         // Case of implicit mul
-                        while let Some(Infix::Circumflex) | Some(Infix::Mul) = infix_stack.last() {
+                        while let Some(x) = infix_stack.last() && *x >= Infix::Mul {
                             self.operate_infix(&mut expr_stack, &mut infix_stack);
                         }
                         expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
@@ -46,9 +48,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 Token::Infix(Infix::Add) => {
-                    while let Some(Infix::Circumflex) | Some(Infix::Mul) | Some(Infix::Add) =
-                        infix_stack.last()
-                    {
+                    while let Some(x) = infix_stack.last() && *x > Infix::Add {
                         self.operate_infix(&mut expr_stack, &mut infix_stack);
                     }
                     infix_stack.push(Infix::Add);
@@ -109,9 +109,11 @@ impl<'a> Parser<'a> {
 }
 
 pub fn latex_to_expr(latex: &str) -> Expr {
-    let mut parser = Parser::new(latex);
+    let latex = latex.replace("\\left", "").replace("\\right", "");
+    let mut parser = Parser::new(latex.as_str());
     parser.parse(&Token::Eof)
 }
+
 #[test]
 fn test_parser() {
     let tests = [
@@ -132,6 +134,7 @@ fn test_parser() {
         ["2x_{2}^{2}", "2*x_{2}^{2}"],
         ["a_{b}^{c}+d_{e}^{f}", "a_{b}^{c}+d_{e}^{f}"],
         ["a_{b}^{c}+xd_{e}^{f}", "a_{b}^{c}+x*d_{e}^{f}"],
+        ["(a+b)", "(a+b)"],
         ["\\left(a+b\\right)", "(a+b)"],
         ["\\left(a+b\\right)+\\left(a+b\\right)", "(a+b)+(a+b)"],
         ["\\left(a+b\\right)\\left(a+b\\right)", "(a+b)*(a+b)"],

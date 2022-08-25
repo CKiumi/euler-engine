@@ -13,7 +13,7 @@ pub enum Token {
     Eof,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, PartialOrd, Ord)]
 pub enum Infix {
     Add,
     Mul,
@@ -58,6 +58,8 @@ impl<'a> Lexer<'a> {
         let token = match self.cur {
             '+' => Token::Infix(Infix::Add),
             '*' => Token::Infix(Infix::Mul),
+            '(' => Token::LParen,
+            ')' => Token::RParen,
             '{' => Token::LCurlyBrace,
             '}' => Token::RCurlyBrace,
             '^' => Token::Infix(Infix::Circumflex),
@@ -80,23 +82,7 @@ impl<'a> Lexer<'a> {
             command.push(self.read_char());
         }
 
-        match &command as &str {
-            "left" => {
-                self.skip_whitespace();
-                match self.read_char() {
-                    '(' => Token::LParen,
-                    _ => Token::Error("Unexpected left command".to_string()),
-                }
-            }
-            "right" => {
-                self.skip_whitespace();
-                match self.read_char() {
-                    ')' => Token::RParen,
-                    _ => Token::Error("Unexpected right command".to_string()),
-                }
-            }
-            _ => Token::Sym(format!("\\{}", command)),
-        }
+        Token::Sym(format!("\\{}", command))
     }
 
     fn read_number(&mut self) -> Num {
@@ -127,7 +113,7 @@ impl<'a> Lexer<'a> {
 
 #[test]
 fn test_lexer() {
-    let mut lexer = Lexer::new(" \\left ( {\\} ab +3 2\\right)\\zeta _{x} c\\x");
+    let mut lexer = Lexer::new("  ( {\\} ab +3 2)\\zeta _{x} c\\x");
     assert_eq!(lexer.next_token(), Token::LParen);
     assert_eq!(lexer.next_token(), Token::LCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("\\".to_owned()));
