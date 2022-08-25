@@ -33,8 +33,6 @@ impl Display for Par {
 
 #[test]
 fn test_paren() {
-    use crate::Sym;
-    let x = Sym::new("x");
-    let y = Sym::new("y");
-    assert_eq!(Par::new(Expr::Add(x + y)).to_string(), "(x+y)");
+    use super::test_util::*;
+    asrt(Par::from(x() + y()), "(x+y)");
 }

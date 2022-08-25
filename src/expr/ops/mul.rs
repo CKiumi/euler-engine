@@ -1,4 +1,4 @@
-use super::{Add, Expr, Mul, Num, Par, Pow, Sym};
+use super::{Add, Expr, Func, Mul, Num, Par, Pow, Sym};
 use std::ops;
 /// Overload * operator
 macro_rules! impl_ops_mul_with_mul {
@@ -27,7 +27,7 @@ macro_rules! impl_ops_mul_with_mul {
         }
     };
 }
-impl_ops_mul_with_mul!(Sym, Pow, Add, Par, Num);
+impl_ops_mul_with_mul!(Sym, Pow, Add, Par, Num, Func);
 
 impl ops::Mul<Mul> for Mul {
     type Output = Mul;
@@ -65,13 +65,13 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym Pow Add Par Num);
+impl_ops_add!(Sym Pow Add Par Num Func);
 
 #[test]
 fn test_mul_ops() {
     use super::Num;
     use crate::expr::test_util::*;
     let n = Num::new(1);
-    assert_eq!((x() * y() * n * y()).to_string(), "x*y*y");
-    assert_eq!(((x() * y()) * (n * y())).to_string(), "x*y*y");
+    asrt(x() * y() * n * y(), "x*y*y");
+    asrt((x() * y()) * (n * y()), "x*y*y");
 }

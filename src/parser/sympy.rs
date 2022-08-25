@@ -1,5 +1,5 @@
 use super::latex_to_expr;
-use crate::Expr;
+use crate::{expr::FuncName, Expr};
 
 pub fn to_sympy(expr: &Expr) -> String {
     match expr {
@@ -17,11 +17,19 @@ pub fn to_sympy(expr: &Expr) -> String {
                 .for_each(|expr| result = format!("{}*{}", result, to_sympy(expr)));
             result
         }
-        Expr::Pow(pow) => format!("{}**{}", to_sympy(&pow.body), to_sympy(&pow.pow)),
+        Expr::Pow(pow) => format!("{}**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
         Expr::Par(paren) => format!("({})", to_sympy(&paren.inner)),
         Expr::Sym(x) => format!("Symbol(\"{}\")", x),
         Expr::Num(x) if x.num == -1 => String::from("-"),
         Expr::Num(x) => x.to_string(),
+        Expr::Func(func) => match func.name {
+            FuncName::Sin | FuncName::Cos | FuncName::Tan => {
+                format!("{}({})", func.name, to_sympy(&func.args))
+            }
+            FuncName::Re | FuncName::Im => {
+                format!("Function(\"\\{}\")({})", func.name, to_sympy(&func.args))
+            }
+        },
     }
 }
 
@@ -34,7 +42,7 @@ fn test_sympy() {
     let tests = [
         ["a", "Symbol(\"a\")"],
         ["a_{2}", "Symbol(\"a_{2}\")"],
-        ["x^{y}", "Symbol(\"x\")**Symbol(\"y\")"],
+        ["x^{y}", "Symbol(\"x\")**(Symbol(\"y\"))"],
         ["\\zeta", "Symbol(\"\\zeta\")"],
         ["a+b", "Symbol(\"a\")+Symbol(\"b\")"],
         ["ab", "Symbol(\"a\")*Symbol(\"b\")"],
@@ -45,6 +53,10 @@ fn test_sympy() {
         [
             "ab(a+b)",
             "Symbol(\"a\")*Symbol(\"b\")*(Symbol(\"a\")+Symbol(\"b\"))",
+        ],
+        [
+            "(ab)\\Re^{x+y}(a+b)(a+b)",
+            r#"(Symbol("a")*Symbol("b"))*Function("\Re")(Symbol("a")+Symbol("b"))**(Symbol("x")+Symbol("y"))*(Symbol("a")+Symbol("b"))"#,
         ],
     ];
     tests.iter().for_each(|test| {

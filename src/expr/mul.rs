@@ -94,24 +94,18 @@ impl Display for Mul {
 
 #[test]
 fn test_mul() {
-    // use super::{Num, Par, Sym};
-    // let x = Sym::new("x");
-    // let y = Sym::new("y");
-    // let n3 = Num::new(3);
-    // assert_eq!((x * y * y).to_pow().to_string(), "x*y^{2}");
-    // assert_eq!((x * y * n3 * y).collect().to_string(), "3*x*y^{2}");
-    // let par = Par::from(x + y);
-    // assert_eq!((x * par.clone()).expand().to_string(), "(x^{2}+x*y)");
-    // assert_eq!((par.clone() * x).expand().to_string(), "(x^{2}+x*y)");
-    // assert_eq!((n3 * par.clone()).expand().to_string(), "(3*x+3*y)");
-    // assert_eq!(
-    //     (par.clone() * par.clone()).expand().to_string(),
-    //     "(x^{2}+2*x*y+y^{2})"
-    // );
-    // assert_eq!(
-    //     (par.clone() * par.clone() * par.clone())
-    //         .expand()
-    //         .to_string(),
-    //     "(x^{3}+3*y*x^{2}+3*x*y^{2}+y^{3})"
-    // );
+    use super::test_util::*;
+    use super::{Num, Par};
+    let n3 = Num::new(3);
+    asrt((x() * y() * y()).to_pow(), "x*y^{2}");
+    asrt((x() * y() * n3 * y()).collect(), "3*x*y^{2}");
+    let par = Par::from(x() + y());
+    asrt((x() * par.clone()).expand(), "(x^{2}+x*y)");
+    asrt((par.clone() * x()).expand(), "(x^{2}+x*y)");
+    asrt((n3 * par.clone()).expand(), "(3*x+3*y)");
+    asrt((par.clone() * par.clone()).expand(), "(x^{2}+2*x*y+y^{2})");
+    asrt(
+        (par.clone() * par.clone() * par).expand(),
+        "(x^{3}+3*y*x^{2}+3*x*y^{2}+y^{3})",
+    );
 }

@@ -38,9 +38,8 @@ impl Display for Sym {
 #[test]
 fn test_sym() {
     use super::test_util::*;
-
-    assert_eq!((x() + y()).to_string(), "x+y");
-    assert_eq!((x() + y() + x()).to_string(), "x+y+x");
-    assert_eq!((x() ^ y()).to_string(), "x^{y}");
-    assert_eq!(((x() + y()) ^ y()).to_string(), "(x+y)^{y}");
+    asrt(x() + y(), "x+y");
+    asrt(x() + y() + x(), "x+y+x");
+    asrt(x() ^ y(), "x^{y}");
+    asrt((x() + y()) ^ y(), "(x+y)^{y}");
 }

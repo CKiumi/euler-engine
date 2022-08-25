@@ -1,4 +1,4 @@
-use crate::Num;
+use crate::{expr::FuncName, Num};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Token {
@@ -9,6 +9,7 @@ pub enum Token {
     LParen,
     Num(Num),
     Sym(String),
+    Func(FuncName),
     Error(String),
     Eof,
 }
@@ -81,8 +82,14 @@ impl<'a> Lexer<'a> {
         while self.cur.is_ascii_alphabetic() {
             command.push(self.read_char());
         }
-
-        Token::Sym(format!("\\{}", command))
+        match command.as_str() {
+            "sin" => Token::Func(FuncName::Sin),
+            "cos" => Token::Func(FuncName::Cos),
+            "tan" => Token::Func(FuncName::Tan),
+            "Re" => Token::Func(FuncName::Re),
+            "Im" => Token::Func(FuncName::Im),
+            _ => Token::Sym(format!("\\{}", command)),
+        }
     }
 
     fn read_number(&mut self) -> Num {
@@ -113,8 +120,12 @@ impl<'a> Lexer<'a> {
 
 #[test]
 fn test_lexer() {
-    let mut lexer = Lexer::new("  ( {\\} ab +3 2)\\zeta _{x} c\\x");
+    let mut lexer = Lexer::new("  (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x");
     assert_eq!(lexer.next_token(), Token::LParen);
+    assert_eq!(lexer.next_token(), Token::Func(FuncName::Re));
+    assert_eq!(lexer.next_token(), Token::LParen);
+    assert_eq!(lexer.next_token(), Token::Sym("x".to_owned()));
+    assert_eq!(lexer.next_token(), Token::RParen);
     assert_eq!(lexer.next_token(), Token::LCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("\\".to_owned()));
     assert_eq!(lexer.next_token(), Token::RCurlyBrace);

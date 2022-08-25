@@ -42,6 +42,12 @@ impl Display for Pow {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Expr::Sym(_) | Expr::Num(_) | Expr::Par(_) = *self.body {
             write!(f, "{}", format_args!("{}^{{{}}}", self.body, self.pow))
+        } else if let Expr::Func(func) = &*self.body {
+            write!(
+                f,
+                "{}",
+                format_args!("{}^{{{}}}({})", func.name, self.pow, func.args)
+            )
         } else {
             write!(f, "{}", format_args!("({})^{{{}}}", self.body, self.pow))
         }
@@ -53,13 +59,12 @@ fn test_pow() {
     use super::test_util::*;
     use super::{Add, Num};
     let pow = Pow::from(x(), y());
-    assert_eq!(pow.to_string(), "x^{y}");
-
+    asrt(pow, "x^{y}");
     let pow = Pow::from(
         Add::new(vec![Expr::Sym(x()), Expr::Sym(y())]),
         Add::new(vec![Expr::Sym(x()), Expr::Sym(y())]),
     );
-    assert_eq!(pow.to_string(), "(x+y)^{x+y}");
+    asrt(pow, "(x+y)^{x+y}");
     let pow = Pow::from(Add::new(vec![Expr::Sym(x()), Expr::Sym(y())]), Num::new(2));
-    assert_eq!(pow.to_mul().to_string(), "(x+y)*(x+y)");
+    asrt(pow.to_mul(), "(x+y)*(x+y)");
 }

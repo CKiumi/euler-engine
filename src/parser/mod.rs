@@ -1,5 +1,8 @@
 pub mod lexer;
-use crate::{expr::Par, Expr, Sym};
+use crate::{
+    expr::{Func, FuncName, Par},
+    Expr, Pow, Sym,
+};
 use lexer::{Lexer, Token};
 mod serializer;
 mod sympy;
@@ -23,6 +26,7 @@ impl<'a> Parser<'a> {
             Token::Sym(slice) => Expr::Sym(Sym::new(slice)),
             Token::Num(num) => Expr::Num(num),
             Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
+            Token::Func(func) => self.parse_func(func),
             Token::Eof => return Expr::Sym(Sym::new("")),
             _ => panic!("Unexpected first token"),
         }];
@@ -80,6 +84,18 @@ impl<'a> Parser<'a> {
                     Infix::Add => expr_stack.push(Expr::Num(*num)),
                     _ => panic!("Number comes first or after +"),
                 },
+                Token::Func(func) => {
+                    if expr_stack.len() == infix_stack.len() {
+                        expr_stack.push(self.parse_func(*func));
+                    } else {
+                        // Case of implicit mul
+                        while let Some(x) = infix_stack.last() && *x >= Infix::Mul {
+                            self.operate_infix(&mut expr_stack, &mut infix_stack);
+                        }
+                        expr_stack.push(self.parse_func(*func));
+                        infix_stack.push(Infix::Mul);
+                    }
+                }
                 _ => unimplemented!(),
             };
         }
@@ -106,6 +122,20 @@ impl<'a> Parser<'a> {
             _ => unimplemented!(),
         }
     }
+
+    fn parse_func(&mut self, name: FuncName) -> Expr {
+        let token = self.lexer.next_token();
+        match token {
+            Token::LParen => Expr::Func(Func::new(name, self.parse(&Token::RParen))),
+            Token::Infix(Infix::Circumflex) => {
+                let pow = self.parse_arg();
+                self.lexer.next_token();
+                let func = Expr::Func(Func::new(name, self.parse(&Token::RParen)));
+                Expr::Pow(Pow::new(func, pow))
+            }
+            _ => unimplemented!(),
+        }
+    }
 }
 
 pub fn latex_to_expr(latex: &str) -> Expr {
@@ -116,6 +146,7 @@ pub fn latex_to_expr(latex: &str) -> Expr {
 
 #[test]
 fn test_parser() {
+    use super::expr::test_util::asrt;
     let tests = [
         ["aaaa", "a*a*a*a"],
         ["a+a+a", "a+a+a"],
@@ -139,8 +170,11 @@ fn test_parser() {
         ["\\left(a+b\\right)+\\left(a+b\\right)", "(a+b)+(a+b)"],
         ["\\left(a+b\\right)\\left(a+b\\right)", "(a+b)*(a+b)"],
         ["\\left(a+b\\right)^{2}", "(a+b)^{2}"],
+        ["\\Re(a+b)", "Re(a+b)"],
+        ["\\Re^{2}(a+b)", "Re^{2}(a+b)"],
+        ["x\\Re^{x+y}(a+b)y", "x*Re^{x+y}(a+b)*y"],
     ];
     tests.iter().for_each(|test| {
-        assert_eq!(latex_to_expr(test[0]).to_string(), test[1]);
+        asrt(latex_to_expr(test[0]), test[1]);
     });
 }

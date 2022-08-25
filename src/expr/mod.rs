@@ -1,4 +1,5 @@
 mod add;
+mod func;
 mod mul;
 mod num;
 mod ops;
@@ -6,6 +7,7 @@ mod par;
 mod pow;
 pub mod sym;
 pub use add::Add;
+pub use func::{Func, FuncName};
 pub use mul::Mul;
 pub use num::Num;
 pub use par::Par;
@@ -21,6 +23,7 @@ pub enum Expr {
     Mul(Mul),
     Pow(Pow),
     Par(Par),
+    Func(Func),
 }
 
 pub trait ToExpr {
@@ -128,7 +131,7 @@ macro_rules! match_all_pairs {
     };
 }
 
-match_all_pairs!(Num Sym Add Mul Pow Par);
+match_all_pairs!(Num Sym Add Mul Pow Par Func);
 
 impl Display for Expr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
@@ -138,6 +141,7 @@ impl Display for Expr {
             Expr::Mul(mul) => write!(f, "{}", mul),
             Expr::Num(num) => write!(f, "{}", num),
             Expr::Pow(pow) => write!(f, "{}", pow),
+            Expr::Func(func) => write!(f, "{}", func),
             Expr::Par(paren) => write!(f, "{}", paren),
         }
     }
@@ -155,23 +159,25 @@ pub mod test_util {
     pub fn z() -> Sym {
         Sym::new("z")
     }
+    pub fn asrt<T: ToString, S: AsRef<str>>(x: T, y: S) {
+        assert_eq!(x.to_string(), y.as_ref());
+    }
 }
 
 #[test]
 fn test_expr() {
     use test_util::*;
     let pow = Expr::Pow(x() ^ y());
-    assert_eq!(pow.detach_pow().0.to_string(), "x");
-    assert_eq!(pow.detach_pow().1.to_string(), "y");
-    assert_eq!(Expr::Sym(x()).detach_pow().0.to_string(), "x");
-    assert_eq!(Expr::Sym(x()).detach_pow().1.to_string(), "1");
-    assert_eq!(
+    asrt(pow.detach_pow().0, "x");
+    asrt(pow.detach_pow().1, "y");
+    asrt(Expr::Sym(x()).detach_pow().0, "x");
+    asrt(Expr::Sym(x()).detach_pow().1, "1");
+    asrt(
         Expr::Pow(Pow::new(
             Expr::Par(Par::new(Expr::Add(x() + y()))),
-            Expr::Num(Num::new(2))
+            Expr::Num(Num::new(2)),
         ))
-        .expand()
-        .to_string(),
-        "(x^{2}+2*x*y+y^{2})"
+        .expand(),
+        "(x^{2}+2*x*y+y^{2})",
     );
 }

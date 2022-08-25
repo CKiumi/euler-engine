@@ -79,28 +79,18 @@ mod test_add {
     fn test_fmt() {
         let n2 = Num::new(2);
         let n0 = Num::new(0);
-
-        assert_eq!((x() + y()).to_string(), "x+y");
-        assert_eq!((x() + n0 + y()).to_string(), "x+y");
-
-        assert_eq!((x() + y() + y()).to_string(), "x+y+y");
-        assert_eq!((n2 * x() + y()).to_string(), "2*x+y");
-
+        asrt(x() + y(), "x+y");
+        asrt(x() + n0 + y(), "x+y");
+        asrt(x() + y() + y(), "x+y+y");
+        asrt(n2 * x() + y(), "2*x+y");
         let test = x() + y() + x() * y();
-        assert_eq!(test.to_string(), "x+y+x*y");
-
-        assert_eq!(((x() + y()) ^ x()).to_string(), "(x+y)^{x}");
-        assert_eq!(
-            (((x() ^ y()) + y() + x()) ^ x()).to_string(),
-            "(x^{y}+y+x)^{x}"
-        );
-        assert_eq!((n2 + n2).collect().to_string(), "4");
-        assert_eq!((x() + y() + y()).collect().to_string(), "x+2*y");
-        assert_eq!((x() + y() + z()).collect().to_string(), "x+y+z");
-        assert_eq!(
-            (x() + (y() ^ n2) + (y() ^ n2) * n2).collect().to_string(),
-            "x+3*y^{2}"
-        );
-        assert_eq!((n2 * x() + x() + y()).collect().to_string(), "3*x+y");
+        asrt(test, "x+y+x*y");
+        asrt((x() + y()) ^ x(), "(x+y)^{x}");
+        asrt(((x() ^ y()) + y() + x()) ^ x(), "(x^{y}+y+x)^{x}");
+        asrt((n2 + n2).collect(), "4");
+        asrt((x() + y() + y()).collect(), "x+2*y");
+        asrt((x() + y() + z()).collect(), "x+y+z");
+        asrt((x() + (y() ^ n2) + (y() ^ n2) * n2).collect(), "x+3*y^{2}");
+        asrt((n2 * x() + x() + y()).collect(), "3*x+y");
     }
 }

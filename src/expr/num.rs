@@ -28,9 +28,10 @@ impl Display for Num {
 
 #[test]
 fn test_num() {
+    use super::test_util::*;
     use super::Expr;
     let x = Expr::Num(Num::new(1));
     let y = Expr::Num(Num::new(2));
-    assert_eq!((x + y).to_string(), "1+2");
-    assert_eq!((Num::new(3) ^ Num::new(3)).to_string(), "3^{3}");
+    asrt(x + y, "1+2");
+    asrt(Num::new(3) ^ Num::new(3), "3^{3}");
 }

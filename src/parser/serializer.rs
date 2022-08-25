@@ -1,3 +1,4 @@
+use crate::expr::Func;
 use crate::Expr;
 
 pub fn serialize(expr: &Expr) -> String {
@@ -19,10 +20,21 @@ pub fn serialize(expr: &Expr) -> String {
                 .for_each(|expr| result = format!("{}{}", result, serialize(expr)));
             result
         }
-        Expr::Pow(pow) => format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow)),
+        Expr::Pow(pow) => {
+            if let Expr::Func(Func { name, args }) = &*pow.body {
+                format!("\\{}^{{{}}}{}", name, pow.pow, lr(serialize(args)))
+            } else {
+                format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow))
+            }
+        }
         Expr::Par(paren) => format!("\\left({}\\right)", serialize(&paren.inner)),
         Expr::Sym(x) => format!("{} ", x),
         Expr::Num(x) if x.num == -1 => String::from("-"),
         Expr::Num(x) => x.to_string(),
+        Expr::Func(func) => format!("\\{}{}", func.name, lr(serialize(&func.args))),
     }
+}
+
+fn lr(body: String) -> String {
+    format!("\\left({body}\\right)")
 }
