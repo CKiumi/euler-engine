@@ -1,31 +1,31 @@
 use super::{Expr, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct Par<'a> {
-    pub inner: Box<Expr<'a>>,
+pub struct Par {
+    pub inner: Box<Expr>,
 }
 
-impl<'a> ToExpr<'a> for Par<'a> {
-    fn to_expr(self) -> Expr<'a> {
+impl ToExpr for Par {
+    fn to_expr(self) -> Expr {
         Expr::Par(self)
     }
 }
 
-impl<'a> Par<'a> {
-    pub fn new(inner: Expr<'a>) -> Self {
+impl Par {
+    pub fn new(inner: Expr) -> Self {
         Par {
             inner: Box::new(inner),
         }
     }
 
-    pub fn from<T: ToExpr<'a>>(inner: T) -> Self {
+    pub fn from<T: ToExpr>(inner: T) -> Self {
         Par {
             inner: Box::new(inner.to_expr()),
         }
     }
 }
 
-impl<'a> Display for Par<'a> {
+impl Display for Par {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({})", self.inner)
     }

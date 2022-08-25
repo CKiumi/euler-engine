@@ -3,18 +3,18 @@ use crate::Num;
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Debug)]
-pub struct Add<'a> {
-    pub exprs: Vec<Expr<'a>>,
+pub struct Add {
+    pub exprs: Vec<Expr>,
 }
 
-impl<'a> ToExpr<'a> for Add<'a> {
-    fn to_expr(self) -> Expr<'a> {
+impl ToExpr for Add {
+    fn to_expr(self) -> Expr {
         Expr::Add(self)
     }
 }
 
-impl<'a> Add<'a> {
-    pub fn new(exprs: Vec<Expr<'a>>) -> Self {
+impl Add {
+    pub fn new(exprs: Vec<Expr>) -> Self {
         Add {
             exprs: exprs
                 .into_iter()
@@ -33,7 +33,7 @@ impl<'a> Add<'a> {
     /// multi expr will be collected beforehand
     /// depend on col_multi
     pub fn collect(&self) -> Self {
-        let mut result = vec![self.exprs[0].collect().clone()];
+        let mut result = vec![self.exprs[0].collect()];
         (1..self.exprs.len()).for_each(|i| {
             for j in 0..result.len() {
                 let (co1, body1) = self.exprs[i].collect().detach_coeff();
@@ -45,7 +45,7 @@ impl<'a> Add<'a> {
                         }
                         x => {
                             result[j] = if let Some(mul) = body1 {
-                                Expr::Mul(Num::new(x) * mul.clone())
+                                Expr::Mul(Num::new(x) * mul)
                             } else {
                                 Expr::Num(Num::new(x))
                             }
@@ -61,7 +61,7 @@ impl<'a> Add<'a> {
     }
 }
 
-impl<'a> Display for Add<'a> {
+impl Display for Add {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let mut result = self.exprs[0].to_string();
         for i in 1..self.exprs.len() {
@@ -73,33 +73,34 @@ impl<'a> Display for Add<'a> {
 
 #[cfg(test)]
 mod test_add {
-    use super::super::{Num, Sym};
+    use super::super::test_util::*;
+    use super::super::Num;
     #[test]
     fn test_fmt() {
-        let x = Sym::new("x");
-        let y = Sym::new("y");
-        let z = Sym::new("z");
         let n2 = Num::new(2);
         let n0 = Num::new(0);
 
-        assert_eq!((x + y).to_string(), "x+y");
-        assert_eq!((x + n0 + y).to_string(), "x+y");
+        assert_eq!((x() + y()).to_string(), "x+y");
+        assert_eq!((x() + n0 + y()).to_string(), "x+y");
 
-        assert_eq!((x + y + y).to_string(), "x+y+y");
-        assert_eq!((n2 * x + y).to_string(), "2*x+y");
+        assert_eq!((x() + y() + y()).to_string(), "x+y+y");
+        assert_eq!((n2 * x() + y()).to_string(), "2*x+y");
 
-        let test = x + y + x * y;
+        let test = x() + y() + x() * y();
         assert_eq!(test.to_string(), "x+y+x*y");
 
-        assert_eq!(((x + y) ^ x).to_string(), "(x+y)^{x}");
-        assert_eq!((((x ^ y) + y + x) ^ x).to_string(), "(x^{y}+y+x)^{x}");
-        assert_eq!((n2 + n2).collect().to_string(), "4");
-        assert_eq!((x + y + y).collect().to_string(), "x+2*y");
-        assert_eq!((x + y + z).collect().to_string(), "x+y+z");
+        assert_eq!(((x() + y()) ^ x()).to_string(), "(x+y)^{x}");
         assert_eq!(
-            (x + (y ^ n2) + (y ^ n2) * n2).collect().to_string(),
+            (((x() ^ y()) + y() + x()) ^ x()).to_string(),
+            "(x^{y}+y+x)^{x}"
+        );
+        assert_eq!((n2 + n2).collect().to_string(), "4");
+        assert_eq!((x() + y() + y()).collect().to_string(), "x+2*y");
+        assert_eq!((x() + y() + z()).collect().to_string(), "x+y+z");
+        assert_eq!(
+            (x() + (y() ^ n2) + (y() ^ n2) * n2).collect().to_string(),
             "x+3*y^{2}"
         );
-        assert_eq!((n2 * x + x + y).collect().to_string(), "3*x+y");
+        assert_eq!((n2 * x() + x() + y()).collect().to_string(), "3*x+y");
     }
 }

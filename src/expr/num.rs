@@ -14,8 +14,8 @@ impl Num {
     }
 }
 
-impl<'a> ToExpr<'a> for Num {
-    fn to_expr(self) -> Expr<'a> {
+impl ToExpr for Num {
+    fn to_expr(self) -> Expr {
         Expr::Num(self)
     }
 }

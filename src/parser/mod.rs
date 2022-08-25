@@ -14,7 +14,7 @@ impl<'a> Parser<'a> {
         let lexer = Lexer::new(input);
         Parser { lexer }
     }
-    pub fn parse(&mut self, end_token: &Token) -> Expr<'a> {
+    pub fn parse(&mut self, end_token: &Token) -> Expr {
         let first_token = self.lexer.next_token();
         let mut infix_stack: Vec<Infix> = vec![];
         let mut expr_stack: Vec<Expr> = vec![match first_token {
@@ -59,7 +59,8 @@ impl<'a> Parser<'a> {
                 }
                 Token::Infix(Infix::Underscore) => match expr_stack.pop().unwrap() {
                     Expr::Sym(mut sym) => {
-                        expr_stack.push(Expr::Sym(sym.set_sub(self.lexer.arg_to_string())))
+                        sym.set_sub(self.lexer.arg_to_string());
+                        expr_stack.push(Expr::Sym(sym));
                     }
                     _ => panic!("Underscore must come after symbol"),
                 },
@@ -99,7 +100,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_arg(&mut self) -> Expr<'a> {
+    fn parse_arg(&mut self) -> Expr {
         match self.lexer.next_token() {
             Token::LCurlyBrace => self.parse(&Token::RCurlyBrace),
             _ => unimplemented!(),
