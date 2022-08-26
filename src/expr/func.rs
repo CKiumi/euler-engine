@@ -11,6 +11,7 @@ pub enum FuncName {
     Tan,
     Re,
     Im,
+    Sqrt,
 }
 
 impl Display for FuncName {
@@ -21,6 +22,7 @@ impl Display for FuncName {
             FuncName::Tan => write!(f, "tan"),
             FuncName::Re => write!(f, "Re"),
             FuncName::Im => write!(f, "Im"),
+            FuncName::Sqrt => write!(f, "sqrt"),
         }
     }
 }

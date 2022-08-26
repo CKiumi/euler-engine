@@ -69,32 +69,19 @@ impl<'a> Parser<'a> {
                     _ => panic!("Underscore must come after symbol"),
                 },
                 Token::Sym(sym) => {
-                    if expr_stack.len() == infix_stack.len() {
-                        expr_stack.push(Expr::Sym(Sym::new(sym)))
-                    } else {
-                        // Case of implicit mul
-                        while let Some(Infix::Circumflex) | Some(Infix::Mul) = infix_stack.last() {
-                            self.operate_infix(&mut expr_stack, &mut infix_stack);
-                        }
-                        expr_stack.push(Expr::Sym(Sym::new(sym)));
-                        infix_stack.push(Infix::Mul);
-                    }
+                    self.handle_implicit_mul(
+                        &mut expr_stack,
+                        &mut infix_stack,
+                        Expr::Sym(Sym::new(sym)),
+                    );
                 }
                 Token::Num(num) => match infix_stack.last().unwrap() {
                     Infix::Add => expr_stack.push(Expr::Num(*num)),
                     _ => panic!("Number comes first or after +"),
                 },
                 Token::Func(func) => {
-                    if expr_stack.len() == infix_stack.len() {
-                        expr_stack.push(self.parse_func(*func));
-                    } else {
-                        // Case of implicit mul
-                        while let Some(x) = infix_stack.last() && *x >= Infix::Mul {
-                            self.operate_infix(&mut expr_stack, &mut infix_stack);
-                        }
-                        expr_stack.push(self.parse_func(*func));
-                        infix_stack.push(Infix::Mul);
-                    }
+                    let expr = self.parse_func(*func);
+                    self.handle_implicit_mul(&mut expr_stack, &mut infix_stack, expr);
                 }
                 _ => unimplemented!(),
             };
@@ -102,6 +89,24 @@ impl<'a> Parser<'a> {
         match expr_stack.pop() {
             Some(expr) if expr_stack.is_empty() => expr,
             _ => panic!("expr_stack must contain only one expr at last"),
+        }
+    }
+
+    fn handle_implicit_mul(
+        &self,
+        expr_stack: &mut Vec<Expr>,
+        infix_stack: &mut Vec<Infix>,
+        expr: Expr,
+    ) {
+        if expr_stack.len() == infix_stack.len() {
+            expr_stack.push(expr)
+        } else {
+            // Case of implicit mul
+            while let Some(Infix::Circumflex) | Some(Infix::Mul) = infix_stack.last() {
+                self.operate_infix(expr_stack, infix_stack);
+            }
+            expr_stack.push(expr);
+            infix_stack.push(Infix::Mul);
         }
     }
 
@@ -124,6 +129,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_func(&mut self, name: FuncName) -> Expr {
+        if let FuncName::Sqrt = name {
+            return Expr::Func(Func::new(name, self.parse_arg()));
+        }
         let token = self.lexer.next_token();
         match token {
             Token::LParen => Expr::Func(Func::new(name, self.parse(&Token::RParen))),
@@ -173,6 +181,8 @@ fn test_parser() {
         ["\\Re(a+b)", "Re(a+b)"],
         ["\\Re^{2}(a+b)", "Re^{2}(a+b)"],
         ["x\\Re^{x+y}(a+b)y", "x*Re^{x+y}(a+b)*y"],
+        ["\\sqrt{2}", "sqrt(2)"],
+        ["\\sqrt{2}^{2}", "sqrt^{2}(2)"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);

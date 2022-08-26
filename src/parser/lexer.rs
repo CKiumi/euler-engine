@@ -88,6 +88,7 @@ impl<'a> Lexer<'a> {
             "tan" => Token::Func(FuncName::Tan),
             "Re" => Token::Func(FuncName::Re),
             "Im" => Token::Func(FuncName::Im),
+            "sqrt" => Token::Func(FuncName::Sqrt),
             _ => Token::Sym(format!("\\{}", command)),
         }
     }

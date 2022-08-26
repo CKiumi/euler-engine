@@ -28,6 +28,7 @@ pub fn to_sympy(expr: &Expr) -> String {
             FuncName::Re | FuncName::Im => {
                 format!("Function(\"\\{}\")({})", func.name, to_sympy(&func.args))
             }
+            FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
         },
     }
 }
@@ -53,6 +54,10 @@ fn test_sympy() {
         [
             "(ab)\\Re^{x+y}(a+b)(a+b)",
             r#"(Symbol("a")*Symbol("b"))*Function("\Re")(Symbol("a")+Symbol("b"))**(Symbol("x")+Symbol("y"))*(Symbol("a")+Symbol("b"))"#,
+        ],
+        [
+            "\\sqrt{a+b}^{x+y}",
+            r#"sqrt(Symbol("a")+Symbol("b"))**(Symbol("x")+Symbol("y"))"#,
         ],
     ];
     tests.iter().for_each(|test| {

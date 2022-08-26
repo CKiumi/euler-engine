@@ -6,14 +6,14 @@ macro_rules! impl_ops_add {
         impl_ops_add!(@step1, $($x)*; $($x)*);
     };
 
-    (@step1,$head:ident$(< $lth:tt >)?$($tail:ident)* ;$($y:ident)*) => {
+    (@step1,$head:ident$($tail:ident)* ;$($y:ident)*) => {
         impl_ops_add!(@step1,$($tail)* ;$($y)*);
         impl_ops_add!(@step2,$head;$($y)*);
     };
 
     (@step1, ;$($y:ident)*) => {};
 
-    (@step2,$x:ident;$y:ident$($z:ident$(< $ltz:tt >)?)*) => {
+    (@step2,$x:ident;$y:ident$($z:ident)*) => {
         impl_ops_add!(@step2,$x;$($z)*);
         impl_ops_add!(@impl,$x;$y);
     };

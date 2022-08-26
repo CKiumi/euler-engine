@@ -1,4 +1,4 @@
-use crate::expr::Func;
+use crate::expr::{Func, FuncName};
 use crate::Expr;
 
 pub fn serialize(expr: &Expr) -> String {
@@ -31,7 +31,10 @@ pub fn serialize(expr: &Expr) -> String {
         Expr::Sym(x) => format!("{} ", x),
         Expr::Num(x) if x.num == -1 => String::from("-"),
         Expr::Num(x) => x.to_string(),
-        Expr::Func(func) => format!("\\{}{}", func.name, lr(serialize(&func.args))),
+        Expr::Func(func) => match func.name {
+            FuncName::Sqrt => format!("\\sqrt{{{}}}", serialize(&func.args)),
+            _ => format!("\\{}{}", func.name, lr(serialize(&func.args))),
+        },
     }
 }
 
