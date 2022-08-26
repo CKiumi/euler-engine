@@ -3,7 +3,7 @@
 mod expr;
 pub mod parser;
 pub use expr::{Add, Expr, Mul, Num, Pow, Sym};
-use parser::{latex_to_expr, serialize};
+use parser::{latex_to_expr, serialize, to_sympy};
 use wasm_bindgen::prelude::*;
 
 extern crate test;
@@ -22,6 +22,11 @@ mod euler_bench {
             )
         });
     }
+}
+
+#[wasm_bindgen]
+pub fn latex_to_sympy(latex: String) -> String {
+    to_sympy(&latex_to_expr(&latex))
 }
 
 #[wasm_bindgen]

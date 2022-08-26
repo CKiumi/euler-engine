@@ -7,7 +7,7 @@ use lexer::{Lexer, Token};
 mod serializer;
 mod sympy;
 pub use serializer::serialize;
-pub use sympy::latex_to_sympy;
+pub use sympy::to_sympy;
 
 use self::lexer::Infix;
 pub struct Parser<'a> {

@@ -1,4 +1,3 @@
-use super::latex_to_expr;
 use crate::{expr::FuncName, Expr};
 
 pub fn to_sympy(expr: &Expr) -> String {
@@ -33,12 +32,9 @@ pub fn to_sympy(expr: &Expr) -> String {
     }
 }
 
-pub fn latex_to_sympy(latex: &str) -> String {
-    to_sympy(&latex_to_expr(latex))
-}
-
 #[test]
 fn test_sympy() {
+    use crate::latex_to_sympy;
     let tests = [
         ["a", "Symbol(\"a\")"],
         ["a_{2}", "Symbol(\"a_{2}\")"],
@@ -60,6 +56,6 @@ fn test_sympy() {
         ],
     ];
     tests.iter().for_each(|test| {
-        assert_eq!(latex_to_sympy(test[0]), test[1]);
+        assert_eq!(latex_to_sympy(test[0].to_string()), test[1]);
     });
 }
