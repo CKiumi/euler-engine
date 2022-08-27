@@ -11,6 +11,7 @@ pub enum Token {
     Num(Num),
     Sym(String),
     Func(FuncName),
+    Frac,
     Error(String),
     Eof,
 }
@@ -85,6 +86,7 @@ impl<'a> Lexer<'a> {
             command.push(self.read_char());
         }
         match command.as_str() {
+            "frac" => Token::Frac,
             "sin" => Token::Func(FuncName::Sin),
             "cos" => Token::Func(FuncName::Cos),
             "tan" => Token::Func(FuncName::Tan),

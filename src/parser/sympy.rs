@@ -16,7 +16,7 @@ pub fn to_sympy(expr: &Expr) -> String {
             }
             result
         }
-        Expr::Pow(pow) => format!("{}**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
+        Expr::Pow(pow) => format!("({})**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
         Expr::Par(paren) => format!("({})", to_sympy(&paren.inner)),
         Expr::Sym(x) => format!("Symbol(\"{}\")", x),
         Expr::Num(x) => x.to_string(),
@@ -29,6 +29,7 @@ pub fn to_sympy(expr: &Expr) -> String {
             }
             FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
         },
+        Expr::Frac(frac) => format!("({})/({})", to_sympy(&frac.numer), to_sympy(&frac.denom)),
     }
 }
 
@@ -40,25 +41,25 @@ fn test_sympy() {
         ["a-b", r#"Symbol("a")+-1*Symbol("b")"#],
         ["-ab", r#"-1*Symbol("a")*Symbol("b")"#],
         ["a_{2}", "Symbol(\"a_{2}\")"],
-        ["x^{y}", "Symbol(\"x\")**(Symbol(\"y\"))"],
+        ["x^{y}", "(Symbol(\"x\"))**(Symbol(\"y\"))"],
         ["\\zeta", "Symbol(\"\\zeta\")"],
         ["a+b", "Symbol(\"a\")+Symbol(\"b\")"],
         ["ab", "Symbol(\"a\")*Symbol(\"b\")"],
         [
             "ab(a+b)",
-            "Symbol(\"a\")*Symbol(\"b\")*(Symbol(\"a\")+Symbol(\"b\"))",
+            r#"Symbol("a")*Symbol("b")*(Symbol("a")+Symbol("b"))"#,
         ],
         [
             "ab(a+b)",
-            "Symbol(\"a\")*Symbol(\"b\")*(Symbol(\"a\")+Symbol(\"b\"))",
+            r#"Symbol("a")*Symbol("b")*(Symbol("a")+Symbol("b"))"#,
         ],
         [
             "(ab)\\Re^{x+y}(a+b)(a+b)",
-            r#"(Symbol("a")*Symbol("b"))*Function("\Re")(Symbol("a")+Symbol("b"))**(Symbol("x")+Symbol("y"))*(Symbol("a")+Symbol("b"))"#,
+            r#"(Symbol("a")*Symbol("b"))*(Function("\Re")(Symbol("a")+Symbol("b")))**(Symbol("x")+Symbol("y"))*(Symbol("a")+Symbol("b"))"#,
         ],
         [
             "\\sqrt{a+b}^{x+y}",
-            r#"sqrt(Symbol("a")+Symbol("b"))**(Symbol("x")+Symbol("y"))"#,
+            r#"(sqrt(Symbol("a")+Symbol("b")))**(Symbol("x")+Symbol("y"))"#,
         ],
     ];
     tests.iter().for_each(|test| {

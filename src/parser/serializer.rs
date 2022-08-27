@@ -34,6 +34,7 @@ pub fn serialize(expr: &Expr) -> String {
                     format!("\\{}^{{{}}}{}", name, pow.pow, lr(serialize(args)))
                 }
             }
+            Expr::Frac(_) => format!("{}^{{{}}}", lr(serialize(&pow.body)), serialize(&pow.pow)),
             _ => format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow)),
         },
         Expr::Par(paren) => format!("\\left({}\\right)", serialize(&paren.inner)),
@@ -44,6 +45,11 @@ pub fn serialize(expr: &Expr) -> String {
             FuncName::Sqrt => format!("\\sqrt{{{}}}", serialize(&func.args)),
             _ => format!("\\{}{}", func.name, lr(serialize(&func.args))),
         },
+        Expr::Frac(frac) => format!(
+            "\\frac{{{}}}{{{}}}",
+            serialize(&frac.numer),
+            serialize(&frac.denom)
+        ),
     }
 }
 
@@ -82,6 +88,7 @@ fn test_serializer() {
         ["x\\Re^{x+y}(a+b)y", "x\\Re^{x+y}\\left(a+b\\right)y"],
         ["\\sqrt{2}", "\\sqrt{2}"],
         ["\\sqrt{2}^{2}", "\\sqrt{2}^{2}"],
+        ["\\frac{2}{2}^{2}", "\\left(\\frac{2}{2}\\right)^{2}"],
     ];
     tests.iter().for_each(|test| {
         asrt(serialize(&latex_to_expr(test[0])), test[1]);

@@ -1,6 +1,6 @@
 pub mod lexer;
 use crate::{
-    expr::{Func, FuncName, Par},
+    expr::{Frac, Func, FuncName, Par},
     Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
@@ -27,6 +27,7 @@ impl<'a> Parser<'a> {
             Token::Num(num) => Expr::Num(num),
             Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
             Token::Func(func) => self.parse_func(func),
+            Token::Frac => Expr::Frac(Frac::new(self.parse_arg(), self.parse_arg())),
             Token::Minus => Expr::Num(Num::new(-1)),
             Token::Eof => return Expr::Sym(Sym::new("")),
             _ => panic!("Unexpected first token"),
@@ -95,6 +96,10 @@ impl<'a> Parser<'a> {
                 },
                 Token::Func(func) => {
                     let expr = self.parse_func(*func);
+                    self.handle_implicit_mul(&mut expr_stack, &mut infix_stack, expr);
+                }
+                Token::Frac => {
+                    let expr = Expr::Frac(Frac::new(self.parse_arg(), self.parse_arg()));
                     self.handle_implicit_mul(&mut expr_stack, &mut infix_stack, expr);
                 }
                 _ => unimplemented!(),
@@ -201,6 +206,8 @@ fn test_parser() {
         ["x\\Re^{x+y}(a+b)y", "x*Re^{x+y}(a+b)*y"],
         ["\\sqrt{2}", "sqrt(2)"],
         ["\\sqrt{2}^{2}", "sqrt^{2}(2)"],
+        ["\\frac{2}{2}", "frac(2)(2)"],
+        ["a\\frac{2}{2}+b", "a*frac(2)(2)+b"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);
