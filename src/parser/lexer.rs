@@ -12,6 +12,10 @@ pub enum Token {
     Sym(String),
     Func(FuncName),
     Frac,
+    MatrixBegin,
+    MatrixEnd,
+    NewLine,
+    Ampersand,
     Error(String),
     Eof,
 }
@@ -68,6 +72,7 @@ impl<'a> Lexer<'a> {
             '}' => Token::RCurlyBrace,
             '^' => Token::Infix(Infix::Circumflex),
             '_' => Token::Infix(Infix::Underscore),
+            '&' => Token::Ampersand,
             '\u{0}' => return Token::Eof,
             '\\' => return self.read_command(),
             c if c.is_ascii_alphabetic() => Token::Sym(self.cur.to_string()),
@@ -81,7 +86,10 @@ impl<'a> Lexer<'a> {
     fn read_command(&mut self) -> Token {
         self.read_char();
         let mut command = String::new();
-
+        if self.cur == '\\' {
+            self.read_char();
+            return Token::NewLine;
+        }
         while self.cur.is_ascii_alphabetic() {
             command.push(self.read_char());
         }
@@ -93,6 +101,22 @@ impl<'a> Lexer<'a> {
             "Re" => Token::Func(FuncName::Re),
             "Im" => Token::Func(FuncName::Im),
             "sqrt" => Token::Func(FuncName::Sqrt),
+            "begin" => {
+                self.skip_whitespace();
+                if self.arg_to_string() == "pmatrix" {
+                    Token::MatrixBegin
+                } else {
+                    Token::Error("unknown command".to_string())
+                }
+            }
+            "end" => {
+                self.skip_whitespace();
+                if self.arg_to_string() == "pmatrix" {
+                    Token::MatrixEnd
+                } else {
+                    Token::Error("unknown command".to_string())
+                }
+            }
             _ => Token::Sym(format!("\\{}", command)),
         }
     }
@@ -115,7 +139,7 @@ impl<'a> Lexer<'a> {
         while self.cur != '}' {
             result.push(self.read_char());
             if self.cur == '\u{0}' {
-                panic!("expected {}", "}")
+                panic!("expected }}")
             }
         }
         self.read_char();
@@ -125,7 +149,9 @@ impl<'a> Lexer<'a> {
 
 #[test]
 fn test_lexer() {
-    let mut lexer = Lexer::new(" - (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x");
+    let mut lexer = Lexer::new(
+        " - (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x \\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix}",
+    );
     assert_eq!(lexer.next_token(), Token::Minus);
     assert_eq!(lexer.next_token(), Token::LParen);
     assert_eq!(lexer.next_token(), Token::Func(FuncName::Re));
@@ -147,5 +173,14 @@ fn test_lexer() {
     assert_eq!(lexer.next_token(), Token::RCurlyBrace);
     assert_eq!(lexer.next_token(), Token::Sym("c".to_owned()));
     assert_eq!(lexer.next_token(), Token::Sym("\\x".to_owned()));
+    assert_eq!(lexer.next_token(), Token::MatrixBegin);
+    assert_eq!(lexer.next_token(), Token::Sym("a".to_owned()));
+    assert_eq!(lexer.next_token(), Token::Ampersand);
+    assert_eq!(lexer.next_token(), Token::Sym("b".to_owned()));
+    assert_eq!(lexer.next_token(), Token::NewLine);
+    assert_eq!(lexer.next_token(), Token::Sym("c".to_owned()));
+    assert_eq!(lexer.next_token(), Token::Ampersand);
+    assert_eq!(lexer.next_token(), Token::Sym("d".to_owned()));
+    assert_eq!(lexer.next_token(), Token::MatrixEnd);
     assert_eq!(lexer.next_token(), Token::Eof);
 }

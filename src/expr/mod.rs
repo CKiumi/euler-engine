@@ -1,6 +1,7 @@
 mod add;
 mod frac;
 mod func;
+mod mat;
 mod mul;
 mod num;
 mod ops;
@@ -10,6 +11,7 @@ pub mod sym;
 pub use add::Add;
 pub use frac::Frac;
 pub use func::{Func, FuncName};
+pub use mat::Mat;
 pub use mul::Mul;
 pub use num::Num;
 pub use par::Par;
@@ -27,6 +29,7 @@ pub enum Expr {
     Par(Par),
     Func(Func),
     Frac(Frac),
+    Mat(Mat),
 }
 
 pub trait ToExpr {
@@ -134,7 +137,7 @@ macro_rules! match_all_pairs {
     };
 }
 
-match_all_pairs!(Num Sym Add Mul Pow Par Func Frac);
+match_all_pairs!(Num Sym Add Mul Pow Par Func Frac Mat);
 
 impl Display for Expr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
@@ -147,6 +150,7 @@ impl Display for Expr {
             Expr::Func(func) => write!(f, "{}", func),
             Expr::Par(paren) => write!(f, "{}", paren),
             Expr::Frac(frac) => write!(f, "{}", frac),
+            Expr::Mat(mat) => write!(f, "{}", mat),
         }
     }
 }

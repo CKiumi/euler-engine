@@ -30,6 +30,21 @@ pub fn to_sympy(expr: &Expr) -> String {
             FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
         },
         Expr::Frac(frac) => format!("({})/({})", to_sympy(&frac.numer), to_sympy(&frac.denom)),
+        Expr::Mat(mat) => {
+            let mut result = "Matrix([[".to_string();
+            for row in &mat.elems {
+                for expr in row {
+                    result.push_str(&to_sympy(expr));
+                    result.push(',');
+                }
+                result.pop();
+                result.push_str("],[");
+            }
+            result.pop();
+            result.pop();
+            result.push_str("])");
+            result
+        }
     }
 }
 
@@ -60,6 +75,10 @@ fn test_sympy() {
         [
             "\\sqrt{a+b}^{x+y}",
             r#"(sqrt(Symbol("a")+Symbol("b")))**(Symbol("x")+Symbol("y"))"#,
+        ],
+        [
+            "\\begin{pmatrix}a+ b & b \\\\ c & d\\end{pmatrix}",
+            r#"Matrix([[Symbol("a")+Symbol("b"),Symbol("b")],[Symbol("c"),Symbol("d")]])"#,
         ],
     ];
     tests.iter().for_each(|test| {

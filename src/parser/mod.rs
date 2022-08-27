@@ -1,6 +1,6 @@
 pub mod lexer;
 use crate::{
-    expr::{Frac, Func, FuncName, Par},
+    expr::{Frac, Func, FuncName, Mat, Par},
     Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
@@ -12,12 +12,18 @@ pub use sympy::to_sympy;
 use self::lexer::Infix;
 pub struct Parser<'a> {
     pub lexer: Lexer<'a>,
+    new_line: bool,
+    end_matrix: bool,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         let lexer = Lexer::new(input);
-        Parser { lexer }
+        Parser {
+            lexer,
+            new_line: false,
+            end_matrix: false,
+        }
     }
     pub fn parse(&mut self, end_token: &Token) -> Expr {
         let first_token = self.lexer.next_token();
@@ -29,7 +35,11 @@ impl<'a> Parser<'a> {
             Token::Func(func) => self.parse_func(func),
             Token::Frac => Expr::Frac(Frac::new(self.parse_arg(), self.parse_arg())),
             Token::Minus => Expr::Num(Num::new(-1)),
+            Token::MatrixBegin => self.parse_mat(),
             Token::Eof => return Expr::Sym(Sym::new("")),
+            Token::NewLine | Token::Ampersand | Token::MatrixEnd => {
+                panic!("Empty element for matrix is not allowed")
+            }
             _ => panic!("Unexpected first token"),
         }];
         loop {
@@ -40,6 +50,24 @@ impl<'a> Parser<'a> {
                         self.operate_infix(&mut expr_stack, &mut infix_stack);
                     }
                     break;
+                }
+                Token::NewLine => {
+                    if let Token::Ampersand = end_token {
+                        self.new_line = true;
+                        for _ in 0..infix_stack.len() {
+                            self.operate_infix(&mut expr_stack, &mut infix_stack);
+                        }
+                        break;
+                    }
+                }
+                Token::MatrixEnd => {
+                    if let Token::Ampersand = end_token {
+                        self.end_matrix = true;
+                        for _ in 0..infix_stack.len() {
+                            self.operate_infix(&mut expr_stack, &mut infix_stack);
+                        }
+                        break;
+                    }
                 }
                 Token::LParen => {
                     if expr_stack.len() == infix_stack.len() {
@@ -102,6 +130,11 @@ impl<'a> Parser<'a> {
                     let expr = Expr::Frac(Frac::new(self.parse_arg(), self.parse_arg()));
                     self.handle_implicit_mul(&mut expr_stack, &mut infix_stack, expr);
                 }
+                Token::MatrixBegin => {
+                    let expr = self.parse_mat();
+                    self.handle_implicit_mul(&mut expr_stack, &mut infix_stack, expr);
+                }
+                Token::Eof => panic!("Unexpected end of input"),
                 _ => unimplemented!(),
             };
         }
@@ -163,6 +196,26 @@ impl<'a> Parser<'a> {
             _ => unimplemented!(),
         }
     }
+
+    fn parse_mat(&mut self) -> Expr {
+        let mut mat = Vec::new();
+        loop {
+            let mut row = Vec::new();
+            loop {
+                row.push(self.parse(&Token::Ampersand));
+                if self.new_line || self.end_matrix {
+                    self.new_line = false;
+                    break;
+                }
+            }
+            mat.push(row);
+            if self.end_matrix {
+                self.end_matrix = false;
+                break;
+            }
+        }
+        Expr::Mat(Mat::new(mat))
+    }
 }
 
 pub fn latex_to_expr(latex: &str) -> Expr {
@@ -208,6 +261,10 @@ fn test_parser() {
         ["\\sqrt{2}^{2}", "sqrt^{2}(2)"],
         ["\\frac{2}{2}", "frac(2)(2)"],
         ["a\\frac{2}{2}+b", "a*frac(2)(2)+b"],
+        [
+            "\\begin{pmatrix}a+ b & b \\\\ c & d\\end{pmatrix}b",
+            "mat([[a+b, b], [c, d]])*b",
+        ],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);

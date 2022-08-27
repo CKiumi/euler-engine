@@ -1,4 +1,4 @@
-use super::{Add, Expr, Frac, Func, Mul, Num, Par, Pow, Sym};
+use super::{Add, Expr, Frac, Func, Mat, Mul, Num, Par, Pow, Sym};
 use std::ops;
 
 /// Overload + operator
@@ -30,7 +30,7 @@ macro_rules! impl_ops_add_with_add {
     };
 }
 
-impl_ops_add_with_add!(Sym, Pow, Mul, Par, Num, Func, Frac);
+impl_ops_add_with_add!(Sym, Pow, Mul, Par, Num, Func, Frac, Mat);
 
 impl ops::Add<Add> for Add {
     type Output = Add;
@@ -68,4 +68,4 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym Pow Mul Par Num Func Frac);
+impl_ops_add!(Sym Pow Mul Par Num Func Frac Mat);

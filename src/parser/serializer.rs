@@ -50,6 +50,22 @@ pub fn serialize(expr: &Expr) -> String {
             serialize(&frac.numer),
             serialize(&frac.denom)
         ),
+        Expr::Mat(mat) => {
+            let mut result = "\\begin{pmatrix}".to_string();
+            for row in &mat.elems {
+                for expr in row {
+                    result.push_str(&serialize(expr));
+                    result.push_str(" & ");
+                }
+                result.pop();
+                result.pop();
+                result.push_str("\\\\");
+            }
+            result.pop();
+            result.pop();
+            result.push_str("\\end{pmatrix}");
+            result
+        }
     }
 }
 
