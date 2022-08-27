@@ -1,7 +1,7 @@
 pub mod lexer;
 use crate::{
     expr::{Func, FuncName, Par},
-    Expr, Pow, Sym,
+    Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
 mod serializer;
@@ -27,6 +27,7 @@ impl<'a> Parser<'a> {
             Token::Num(num) => Expr::Num(num),
             Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
             Token::Func(func) => self.parse_func(func),
+            Token::Minus => Expr::Num(Num::new(-1)),
             Token::Eof => return Expr::Sym(Sym::new("")),
             _ => panic!("Unexpected first token"),
         }];
@@ -50,6 +51,13 @@ impl<'a> Parser<'a> {
                         expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
                         infix_stack.push(Infix::Mul);
                     }
+                }
+                Token::Minus => {
+                    while let Some(x) = infix_stack.last() && *x > Infix::Add {
+                        self.operate_infix(&mut expr_stack, &mut infix_stack);
+                    }
+                    infix_stack.push(Infix::Add);
+                    expr_stack.push(Expr::Num(Num::new(-1)));
                 }
                 Token::Infix(Infix::Add) => {
                     while let Some(x) = infix_stack.last() && *x > Infix::Add {
@@ -76,8 +84,14 @@ impl<'a> Parser<'a> {
                     );
                 }
                 Token::Num(num) => match infix_stack.last().unwrap() {
-                    Infix::Add => expr_stack.push(Expr::Num(*num)),
-                    _ => panic!("Number comes first or after +"),
+                    Infix::Add => match expr_stack.last().unwrap() {
+                        Expr::Num(x) if x.num == -1 => {
+                            expr_stack.pop();
+                            expr_stack.push(Expr::Num(Num::new(-num.num)));
+                        }
+                        _ => expr_stack.push(Expr::Num(*num)),
+                    },
+                    _ => panic!("Number comes first or after + -"),
                 },
                 Token::Func(func) => {
                     let expr = self.parse_func(*func);
@@ -158,6 +172,10 @@ fn test_parser() {
     let tests = [
         ["aaaa", "a*a*a*a"],
         ["a+a+a", "a+a+a"],
+        ["-a+b", "-a+b"],
+        ["x-(a+b)", "x-(a+b)"],
+        ["a-b", "a-b"],
+        ["a-1", "a-1"],
         ["a+bc", "a+b*c"],
         ["ab+b\\alpha sdas+x", "a*b+b*\\alpha*s*d*a*s+x"],
         ["aaaa", "a*a*a*a"],

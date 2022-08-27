@@ -3,6 +3,7 @@ use crate::{expr::FuncName, Num};
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Token {
     Infix(Infix),
+    Minus,
     LCurlyBrace,
     RCurlyBrace,
     RParen,
@@ -58,6 +59,7 @@ impl<'a> Lexer<'a> {
         self.skip_whitespace();
         let token = match self.cur {
             '+' => Token::Infix(Infix::Add),
+            '-' => Token::Minus,
             '*' => Token::Infix(Infix::Mul),
             '(' => Token::LParen,
             ')' => Token::RParen,
@@ -121,7 +123,8 @@ impl<'a> Lexer<'a> {
 
 #[test]
 fn test_lexer() {
-    let mut lexer = Lexer::new("  (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x");
+    let mut lexer = Lexer::new(" - (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x");
+    assert_eq!(lexer.next_token(), Token::Minus);
     assert_eq!(lexer.next_token(), Token::LParen);
     assert_eq!(lexer.next_token(), Token::Func(FuncName::Re));
     assert_eq!(lexer.next_token(), Token::LParen);

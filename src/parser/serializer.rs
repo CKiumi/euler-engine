@@ -1,5 +1,5 @@
 use crate::expr::{Func, FuncName};
-use crate::Expr;
+use crate::{Expr, Mul, Num};
 
 pub fn serialize(expr: &Expr) -> String {
     match expr {
@@ -13,23 +13,32 @@ pub fn serialize(expr: &Expr) -> String {
             });
             result
         }
-        Expr::Mul(mul) => {
-            let mut result = String::new();
-            mul.exprs
-                .iter()
-                .for_each(|expr| result = format!("{}{}", result, serialize(expr)));
+        Expr::Mul(Mul { exprs }) => {
+            if exprs.len() == 1 {
+                return serialize(&exprs[0]);
+            }
+            let mut result = match exprs[0] {
+                Expr::Num(num) if num == Num::new(-1) => "-".to_string(),
+                _ => serialize(&exprs[0]),
+            };
+            for expr in &exprs[1..] {
+                result.push_str(&serialize(expr));
+            }
             result
         }
-        Expr::Pow(pow) => {
-            if let Expr::Func(Func { name, args }) = &*pow.body {
-                format!("\\{}^{{{}}}{}", name, pow.pow, lr(serialize(args)))
-            } else {
-                format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow))
+        Expr::Pow(pow) => match &*pow.body {
+            Expr::Func(Func { name, args }) => {
+                if name == &FuncName::Sqrt {
+                    format!("\\{}{{{}}}^{{{}}}", name, serialize(args), pow.pow)
+                } else {
+                    format!("\\{}^{{{}}}{}", name, pow.pow, lr(serialize(args)))
+                }
             }
-        }
+            _ => format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow)),
+        },
         Expr::Par(paren) => format!("\\left({}\\right)", serialize(&paren.inner)),
-        Expr::Sym(x) => format!("{} ", x),
-        Expr::Num(x) if x.num == -1 => String::from("-"),
+        Expr::Sym(x) if x.to_string().starts_with('\\') => format!("{} ", x),
+        Expr::Sym(x) => format!("{}", x),
         Expr::Num(x) => x.to_string(),
         Expr::Func(func) => match func.name {
             FuncName::Sqrt => format!("\\sqrt{{{}}}", serialize(&func.args)),
@@ -40,4 +49,41 @@ pub fn serialize(expr: &Expr) -> String {
 
 fn lr(body: String) -> String {
     format!("\\left({body}\\right)")
+}
+
+#[test]
+fn test_serializer() {
+    use crate::expr::test_util::asrt;
+    use crate::parser::latex_to_expr;
+    let tests = [
+        ["aaaa", "aaaa"],
+        ["a+a+a", "a+a+a"],
+        ["-a+b", "-a+b"],
+        ["x-(a+b)", "x-\\left(a+b\\right)"],
+        ["a-b", "a-b"],
+        ["a-1", "a-1"],
+        ["a+bc", "a+bc"],
+        ["ab+b\\alpha sdas+x", "ab+b\\alpha sdas+x"],
+        ["", ""],
+        ["b^{a}", "b^{a}"],
+        ["b_{a}", "b_{a}"],
+        ["b_{a}^{c}", "b_{a}^{c}"],
+        ["23a", "23a"],
+        ["23a+23a", "23a+23a"],
+        ["x^{2}+x^{2}", "x^{2}+x^{2}"],
+        ["2x^{2}+2x^{2}", "2x^{2}+2x^{2}"],
+        ["2x^{x+y}+2x^{xy}", "2x^{x+y}+2x^{xy}"],
+        ["2x_{2}^{2}", "2x_{2}^{2}"],
+        ["a_{b}^{c}+d_{e}^{f}", "a_{b}^{c}+d_{e}^{f}"],
+        ["a_{b}^{c}+xd_{e}^{f}", "a_{b}^{c}+xd_{e}^{f}"],
+        ["(a+b)", "\\left(a+b\\right)"],
+        ["\\Re(a+b)", "\\Re\\left(a+b\\right)"],
+        ["\\Re^{2}(a+b)", "\\Re^{2}\\left(a+b\\right)"],
+        ["x\\Re^{x+y}(a+b)y", "x\\Re^{x+y}\\left(a+b\\right)y"],
+        ["\\sqrt{2}", "\\sqrt{2}"],
+        ["\\sqrt{2}^{2}", "\\sqrt{2}^{2}"],
+    ];
+    tests.iter().for_each(|test| {
+        asrt(serialize(&latex_to_expr(test[0])), test[1]);
+    });
 }

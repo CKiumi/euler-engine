@@ -64,8 +64,18 @@ impl Add {
 impl Display for Add {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let mut result = self.exprs[0].to_string();
-        for i in 1..self.exprs.len() {
-            result = format!("{}+{}", result, self.exprs[i]);
+        for expr in &self.exprs[1..] {
+            result = match expr {
+                Expr::Num(n) if n.num < 0 => format!("{result}{expr}"),
+                Expr::Mul(mul) => {
+                    if let Expr::Num(n) = mul.exprs[0] && n.num < 0 {
+                        format!("{result}{expr}")    
+                    }else {
+                        format!("{result}+{expr}")
+                    }
+                }
+                _ => format!("{result}+{expr}"),
+            }
         }
         write!(f, "{}", result)
     }

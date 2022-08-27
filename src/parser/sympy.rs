@@ -4,22 +4,21 @@ pub fn to_sympy(expr: &Expr) -> String {
     match expr {
         Expr::Add(add) => {
             let mut result = to_sympy(&add.exprs[0]);
-            add.exprs[1..]
-                .iter()
-                .for_each(|expr| result = format!("{}+{}", result, to_sympy(expr)));
+            for expr in &add.exprs[1..] {
+                result = format!("{}+{}", result, to_sympy(expr));
+            }
             result
         }
         Expr::Mul(mul) => {
             let mut result = to_sympy(&mul.exprs[0]);
-            mul.exprs[1..]
-                .iter()
-                .for_each(|expr| result = format!("{}*{}", result, to_sympy(expr)));
+            for expr in &mul.exprs[1..] {
+                result = format!("{}*{}", result, to_sympy(expr));
+            }
             result
         }
         Expr::Pow(pow) => format!("{}**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
         Expr::Par(paren) => format!("({})", to_sympy(&paren.inner)),
         Expr::Sym(x) => format!("Symbol(\"{}\")", x),
-        Expr::Num(x) if x.num == -1 => String::from("-"),
         Expr::Num(x) => x.to_string(),
         Expr::Func(func) => match func.name {
             FuncName::Sin | FuncName::Cos | FuncName::Tan => {
@@ -38,6 +37,8 @@ fn test_sympy() {
     use crate::latex_to_sympy;
     let tests = [
         ["a", "Symbol(\"a\")"],
+        ["a-b", r#"Symbol("a")+-1*Symbol("b")"#],
+        ["-ab", r#"-1*Symbol("a")*Symbol("b")"#],
         ["a_{2}", "Symbol(\"a_{2}\")"],
         ["x^{y}", "Symbol(\"x\")**(Symbol(\"y\"))"],
         ["\\zeta", "Symbol(\"\\zeta\")"],

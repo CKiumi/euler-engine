@@ -80,15 +80,24 @@ impl Mul {
 
 impl Display for Mul {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let mut result = String::new();
-        for expr in &self.exprs {
-            result = if let Expr::Add(_) = expr {
-                format!("{}*({})", result, expr)
-            } else {
-                format!("{}*{}", result, expr)
-            };
+        let handle_add = |expr: &Expr| match expr {
+            Expr::Add(_) => format!("({expr})"),
+            _ => expr.to_string(),
+        };
+        let exprs = &self.exprs;
+        if exprs.len() == 1 {
+            return write!(f, "{}", exprs[0]);
         }
-        write!(f, "{}", &result[1..])
+        let mut result = match exprs[0] {
+            Expr::Num(num) if num == Num::new(-1) => {
+                format!("-{}", handle_add(&exprs[1]))
+            }
+            _ => format!("{}*{}", handle_add(&exprs[0]), handle_add(&exprs[1])),
+        };
+        for expr in &exprs[2..] {
+            result = format!("{result}*{}", handle_add(expr))
+        }
+        write!(f, "{}", &result)
     }
 }
 
@@ -97,6 +106,7 @@ fn test_mul() {
     use super::test_util::*;
     use super::{Num, Par};
     let n3 = Num::new(3);
+    let minus = Num::new(-1);
     asrt((x() * y() * y()).to_pow(), "x*y^{2}");
     asrt((x() * y() * n3 * y()).collect(), "3*x*y^{2}");
     let par = Par::from(x() + y());
@@ -108,4 +118,6 @@ fn test_mul() {
         (par.clone() * par.clone() * par).expand(),
         "(x^{3}+3*y*x^{2}+3*x*y^{2}+y^{3})",
     );
+    let par = Par::from(x() + minus * y());
+    asrt((par.clone() * par).expand(), "(x^{2}-2*x*y+y^{2})");
 }

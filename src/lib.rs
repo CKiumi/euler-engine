@@ -48,10 +48,10 @@ pub fn collect(input: String) -> String {
 fn test_lib() {
     assert_eq!(
         expand("\\left(x+y\\right)^{2}".to_string()),
-        "\\left(x ^{2}+2x y +y ^{2}\\right)"
+        "\\left(x^{2}+2xy+y^{2}\\right)"
     );
     assert_eq!(
         expand("(\\sin^{2}(x)+\\Re^{2}(y))^{2}".to_string()),
-        "\\left(\\sin^{4}\\left(x \\right)+2\\sin^{2}\\left(x \\right)\\Re^{2}\\left(y \\right)+\\Re^{4}\\left(y \\right)\\right)"
+        "\\left(\\sin^{4}\\left(x\\right)+2\\sin^{2}\\left(x\\right)\\Re^{2}\\left(y\\right)+\\Re^{4}\\left(y\\right)\\right)"
     );
 }
