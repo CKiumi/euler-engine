@@ -2,29 +2,21 @@ use super::{Add, Expr, Frac, Func, Mat, Mul, Num, Par, Pow, Sym};
 use std::ops;
 /// Overload * operator
 macro_rules! impl_ops_mul_with_mul {
-    ($($y:ident),*) => {
+    ($($x:ident),*) => {
         $(
-           impl_ops_mul_with_mul!(@left,$y);
-           impl_ops_mul_with_mul!(@right,$y);
+            impl ops::Mul<$x> for Mul {
+                type Output = Mul;
+                fn mul(self, mut _rhs: $x) -> Mul {
+                    Mul::new([&self.exprs, &[Expr::$x(_rhs)][..]].concat())
+                }
+            }
+            impl ops::Mul<Mul> for $x {
+                type Output = Mul;
+                fn mul(self, mut _rhs: Mul) -> Mul {
+                    Mul::new([&[Expr::$x(self)][..],&_rhs.exprs].concat())
+                }
+            }
         )*
-    };
-
-    (@left,$x:ident) => {
-        impl ops::Mul<$x> for Mul {
-            type Output = Mul;
-            fn mul(self, mut _rhs: $x) -> Mul {
-                Mul::new([&self.exprs, &[Expr::$x(_rhs)][..]].concat())
-            }
-        }
-    };
-
-    (@right,$x:ident) => {
-        impl ops::Mul<Mul> for $x {
-            type Output = Mul;
-            fn mul(self, mut _rhs: Mul) -> Mul {
-                Mul::new([&[Expr::$x(self)][..],&_rhs.exprs].concat())
-            }
-        }
     };
 }
 impl_ops_mul_with_mul!(Sym, Pow, Add, Par, Num, Func, Frac, Mat);

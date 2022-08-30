@@ -3,30 +3,21 @@ use std::ops;
 
 /// Overload + operator
 macro_rules! impl_ops_add_with_add {
-    ($($y:ident),*) => {
+    ($($x:ident),*) => {
         $(
-           impl_ops_add_with_add!(@left,$y);
-           impl_ops_add_with_add!(@right,$y);
+            impl ops::Add<$x> for Add {
+                type Output = Add;
+                fn add(self, mut _rhs: $x) -> Add {
+                    Add::new([&self.exprs, &[Expr::$x(_rhs)][..]].concat())
+                }
+            }
+            impl ops::Add<Add> for $x {
+                type Output = Add;
+                fn add(self, mut _rhs: Add) -> Add {
+                    Add::new([&[Expr::$x(self)][..],&_rhs.exprs].concat())
+                }
+            }
         )*
-    };
-
-    (@left,$x:ident) => {
-        impl ops::Add<$x> for Add {
-            type Output = Add;
-            fn add(self, mut _rhs: $x) -> Add {
-                Add::new([&self.exprs, &[Expr::$x(_rhs)][..]].concat())
-            }
-        }
-    };
-
-    (@right,$x:ident$(< $ltx:tt >)?) => {
-        impl ops::Add<Add> for $x {
-            type Output = Add;
-            fn add(self, mut _rhs: Add) -> Add {
-                Add::new([&[Expr::$x(self)][..],&_rhs.exprs].concat())
-            }
-        }
-
     };
 }
 

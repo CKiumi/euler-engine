@@ -103,18 +103,16 @@ impl<'a> Lexer<'a> {
             "sqrt" => Token::Func(FuncName::Sqrt),
             "begin" => {
                 self.skip_whitespace();
-                if self.arg_to_string() == "pmatrix" {
-                    Token::MatrixBegin
-                } else {
-                    Token::Error("unknown command".to_string())
+                match self.arg_to_string().as_str() {
+                    "matrix" | "pmatrix" | "bmatrix" => Token::MatrixBegin,
+                    _ => Token::Error("unknown command".to_string()),
                 }
             }
             "end" => {
                 self.skip_whitespace();
-                if self.arg_to_string() == "pmatrix" {
-                    Token::MatrixEnd
-                } else {
-                    Token::Error("unknown command".to_string())
+                match self.arg_to_string().as_str() {
+                    "matrix" | "pmatrix" | "bmatrix" => Token::MatrixEnd,
+                    _ => Token::Error("unknown command".to_string()),
                 }
             }
             _ => Token::Sym(format!("\\{}", command)),
