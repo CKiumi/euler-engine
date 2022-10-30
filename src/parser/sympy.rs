@@ -18,6 +18,7 @@ pub fn to_sympy(expr: &Expr) -> String {
         }
         Expr::Pow(pow) => format!("({})**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
         Expr::Par(paren) => format!("({})", to_sympy(&paren.inner)),
+        Expr::Sym(x) if x.symbol == "i" => "I".to_string(),
         Expr::Sym(x) => format!("Symbol(\"{}\")", x),
         Expr::Num(x) => x.to_string(),
         Expr::Func(func) => match func.name {
@@ -64,6 +65,7 @@ fn test_sympy() {
             "ab(a+b)",
             r#"Symbol("a")*Symbol("b")*(Symbol("a")+Symbol("b"))"#,
         ],
+        ["1+i", r#"1+I"#],
         [
             "ab(a+b)",
             r#"Symbol("a")*Symbol("b")*(Symbol("a")+Symbol("b"))"#,
@@ -79,6 +81,10 @@ fn test_sympy() {
         [
             "\\begin{pmatrix}a+ b & b \\\\ c & d\\end{pmatrix}",
             r#"Matrix([[Symbol("a")+Symbol("b"),Symbol("b")],[Symbol("c"),Symbol("d")]])"#,
+        ],
+        [
+            "\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}",
+            r#"Matrix([[1,-1*0],[0,-1]])"#,
         ],
     ];
     tests.iter().for_each(|test| {

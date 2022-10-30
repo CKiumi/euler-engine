@@ -112,14 +112,16 @@ impl<'a> Parser<'a> {
                         Expr::Sym(Sym::new(sym)),
                     );
                 }
-                Token::Num(num) => match infix_stack.last().unwrap() {
-                    Infix::Add => match expr_stack.last().unwrap() {
+                Token::Num(num) => match infix_stack.last() {
+                    Some(Infix::Add) => match expr_stack.last().unwrap() {
                         Expr::Num(x) if x.num == -1 => {
                             expr_stack.pop();
                             expr_stack.push(Expr::Num(Num::new(-num.num)));
                         }
                         _ => expr_stack.push(Expr::Num(*num)),
                     },
+                    //start with negative number
+                    None => expr_stack[0] = expr_stack[0].clone() * Expr::Num(*num),
                     _ => panic!("Number comes first or after + -"),
                 },
                 Token::Func(func) => {

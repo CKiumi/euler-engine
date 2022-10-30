@@ -2,7 +2,7 @@ use super::{Expr, ToExpr};
 use std::fmt::{Display, Formatter, Result};
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Sym {
-    symbol: String,
+    pub symbol: String,
     sub: String,
 }
 
