@@ -1,4 +1,4 @@
-use crate::expr::{Func, FuncName};
+use crate::expr::{Func, FuncName, Tensor};
 use crate::{Expr, Mul, Num};
 
 pub fn serialize(expr: &Expr) -> String {
@@ -14,6 +14,19 @@ pub fn serialize(expr: &Expr) -> String {
             result
         }
         Expr::Mul(Mul { exprs }) => {
+            if exprs.len() == 1 {
+                return serialize(&exprs[0]);
+            }
+            let mut result = match exprs[0] {
+                Expr::Num(num) if num == Num::new(-1) => "-".to_string(),
+                _ => serialize(&exprs[0]),
+            };
+            for expr in &exprs[1..] {
+                result.push_str(&serialize(expr));
+            }
+            result
+        }
+        Expr::Tensor(Tensor { exprs }) => {
             if exprs.len() == 1 {
                 return serialize(&exprs[0]);
             }

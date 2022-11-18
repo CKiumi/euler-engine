@@ -8,6 +8,7 @@ mod ops;
 mod par;
 mod pow;
 pub mod sym;
+mod tensor;
 pub use add::Add;
 pub use frac::Frac;
 pub use func::{Func, FuncName};
@@ -18,6 +19,7 @@ pub use par::Par;
 pub use pow::Pow;
 use std::fmt::{Display, Formatter, Result};
 pub use sym::Sym;
+pub use tensor::Tensor;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum Expr {
@@ -25,6 +27,7 @@ pub enum Expr {
     Sym(Sym),
     Add(Add),
     Mul(Mul),
+    Tensor(Tensor),
     Pow(Pow),
     Par(Par),
     Func(Func),
@@ -137,7 +140,7 @@ macro_rules! match_all_pairs {
     };
 }
 
-match_all_pairs!(Num Sym Add Mul Pow Par Func Frac Mat);
+match_all_pairs!(Num Sym Add Mul Pow Par Func Frac Mat Tensor);
 
 impl Display for Expr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
@@ -151,6 +154,7 @@ impl Display for Expr {
             Expr::Par(paren) => write!(f, "{}", paren),
             Expr::Frac(frac) => write!(f, "{}", frac),
             Expr::Mat(mat) => write!(f, "{}", mat),
+            Expr::Tensor(tensor) => write!(f, "{}", tensor),
         }
     }
 }

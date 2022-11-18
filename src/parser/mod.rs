@@ -1,6 +1,6 @@
 pub mod lexer;
 use crate::{
-    expr::{Frac, Func, FuncName, Mat, Par},
+    expr::{Frac, Func, FuncName, Mat, Par, Tensor},
     Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
@@ -94,6 +94,12 @@ impl<'a> Parser<'a> {
                     }
                     infix_stack.push(Infix::Add);
                 }
+                Token::Infix(Infix::Tensor) => {
+                    while let Some(x) = infix_stack.last() && *x > Infix::Tensor {
+                        self.operate_infix(&mut expr_stack, &mut infix_stack);
+                    }
+                    infix_stack.push(Infix::Tensor);
+                }
                 Token::Infix(Infix::Circumflex) => {
                     infix_stack.push(Infix::Circumflex);
                     expr_stack.push(self.parse_arg());
@@ -171,6 +177,7 @@ impl<'a> Parser<'a> {
             Infix::Mul => left * right,
             Infix::Add => left + right,
             Infix::Circumflex => left ^ right,
+            Infix::Tensor => Expr::Tensor(Tensor::new(vec![left, right])),
             _ => unimplemented!(),
         })
     }

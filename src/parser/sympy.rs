@@ -16,6 +16,14 @@ pub fn to_sympy(expr: &Expr) -> String {
             }
             result
         }
+        Expr::Tensor(tensor) => {
+            let mut result = format!("TensorProduct({}", to_sympy(&tensor.exprs[0]));
+            for expr in &tensor.exprs[1..] {
+                result = format!("{},{}", result, to_sympy(expr));
+            }
+            result = format!("{})", result);
+            result
+        }
         Expr::Pow(pow) => format!("({})**({})", to_sympy(&pow.body), to_sympy(&pow.pow)),
         Expr::Par(paren) => format!("({})", to_sympy(&paren.inner)),
         Expr::Sym(x) if x.symbol == "i" => "I".to_string(),
@@ -85,6 +93,10 @@ fn test_sympy() {
         [
             "\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}",
             r#"Matrix([[1,-1*0],[0,-1]])"#,
+        ],
+        [
+            "a\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}\\otimes\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}\\otimes\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}",
+            r#"TensorProduct(Symbol("a")*Matrix([[1,-1*0],[0,-1]]),TensorProduct(Matrix([[1,-1*0],[0,-1]]),Matrix([[1,-1*0],[0,-1]])))"#,
         ],
     ];
     tests.iter().for_each(|test| {

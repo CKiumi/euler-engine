@@ -23,6 +23,7 @@ pub enum Token {
 #[derive(Clone, PartialEq, Eq, Debug, PartialOrd, Ord)]
 pub enum Infix {
     Add,
+    Tensor,
     Mul,
     Underscore,
     Circumflex,
@@ -94,6 +95,7 @@ impl<'a> Lexer<'a> {
             command.push(self.read_char());
         }
         match command.as_str() {
+            "otimes" => Token::Infix(Infix::Tensor),
             "frac" => Token::Frac,
             "sin" => Token::Func(FuncName::Sin),
             "cos" => Token::Func(FuncName::Cos),
