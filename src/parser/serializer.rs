@@ -1,4 +1,4 @@
-use crate::expr::{Func, FuncName, Tensor};
+use crate::expr::{Func, FuncName, GateName, Tensor};
 use crate::{Expr, Mul, Num};
 
 pub fn serialize(expr: &Expr) -> String {
@@ -50,6 +50,15 @@ pub fn serialize(expr: &Expr) -> String {
             Expr::Frac(_) => format!("{}^{{{}}}", lr(serialize(&pow.body)), serialize(&pow.pow)),
             _ => format!("{}^{{{}}}", serialize(&pow.body), serialize(&pow.pow)),
         },
+        Expr::Gate(gate) => match gate.name {
+            GateName::H(qbit) => format!("H_{{{}}}", qbit),
+            GateName::I(qbit) => format!("H_{{{}}}", qbit),
+            GateName::X(qbit) => format!("H_{{{}}}", qbit),
+            GateName::Y(qbit) => format!("H_{{{}}}", qbit),
+            GateName::Z(qbit) => format!("H_{{{}}}", qbit),
+            GateName::S(qbit) => format!("H_{{{}}}", qbit),
+            GateName::T(qbit) => format!("H_{{{}}}", qbit),
+        },
         Expr::Par(paren) => format!("\\left({}\\right)", serialize(&paren.inner)),
         Expr::Sym(x) if x.to_string().starts_with('\\') => format!("{} ", x),
         Expr::Sym(x) => format!("{}", x),
@@ -79,7 +88,7 @@ pub fn serialize(expr: &Expr) -> String {
             result.push_str("\\end{pmatrix}");
             result
         }
-        Expr::Ket(ket) => format!("|{}\\rangle", ket.inner),
+        Expr::Ket(ket) => format!("\\left|{}\\right>", ket.inner),
     }
 }
 
@@ -119,6 +128,7 @@ fn test_serializer() {
         ["\\sqrt{2}", "\\sqrt{2}"],
         ["\\sqrt{2}^{2}", "\\sqrt{2}^{2}"],
         ["\\frac{2}{2}^{2}", "\\left(\\frac{2}{2}\\right)^{2}"],
+        ["H_{0}H_{1}\\left|00\\right>", "H_{0}H_{1}\\left|00\\right>"],
     ];
     tests.iter().for_each(|test| {
         asrt(serialize(&latex_to_expr(test[0])), test[1]);

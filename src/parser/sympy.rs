@@ -37,8 +37,8 @@ pub fn to_sympy(expr: &Expr) -> String {
                 format!("Function(\"\\{}\")({})", func.name, to_sympy(&func.args))
             }
             FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
-            FuncName::H(qbit) => format!("H({})", qbit),
         },
+        Expr::Gate(gate) => gate.to_string(),
         Expr::Frac(frac) => format!("({})/({})", to_sympy(&frac.numer), to_sympy(&frac.denom)),
         Expr::Mat(mat) => {
             let mut result = "Matrix([[".to_string();
@@ -55,7 +55,7 @@ pub fn to_sympy(expr: &Expr) -> String {
             result.push_str("])");
             result
         }
-        Expr::Ket(ket) => format!("Qubit(\"{}\")", ket),
+        Expr::Ket(ket) => format!("Qubit('{}')", ket.inner),
     }
 }
 
@@ -100,6 +100,10 @@ fn test_sympy() {
             "a\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}\\otimes\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}\\otimes\\begin{pmatrix}1 & -0 \\\\ 0 & -1\\end{pmatrix}",
             r#"TensorProduct(Symbol("a")*Matrix([[1,-1*0],[0,-1]]),TensorProduct(Matrix([[1,-1*0],[0,-1]]),Matrix([[1,-1*0],[0,-1]])))"#,
         ],
+        [
+            "H_{0}H_{1}\\left|00\\right>",
+            r#"H(0)*H(1)*Qubit('00')"#,
+        ]
     ];
     tests.iter().for_each(|test| {
         assert_eq!(latex_to_sympy(test[0].to_string()), test[1]);

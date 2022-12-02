@@ -1,6 +1,6 @@
 pub mod lexer;
 use crate::{
-    expr::{Frac, Func, FuncName, Ket, Mat, Par, Tensor},
+    expr::{Frac, Func, FuncName, Gate, GateName, Ket, Mat, Par, Tensor},
     Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
@@ -70,6 +70,18 @@ impl<'a> Parser<'a> {
                         break;
                     }
                 }
+                Token::Bar => {
+                    if expr_stack.len() == infix_stack.len() {
+                        expr_stack.push(Expr::Ket(Ket::new(self.lexer.arg_to_string())));
+                    } else {
+                        // Case of implicit mul
+                        while let Some(x) = infix_stack.last() && *x >= Infix::Mul {
+                            self.operate_infix(&mut expr_stack, &mut infix_stack);
+                        }
+                        expr_stack.push(Expr::Ket(Ket::new(self.lexer.arg_to_string())));
+                        infix_stack.push(Infix::Mul);
+                    }
+                }
                 Token::LParen => {
                     if expr_stack.len() == infix_stack.len() {
                         expr_stack.push(Expr::Par(Par::new(self.parse(&Token::RParen))));
@@ -111,16 +123,10 @@ impl<'a> Parser<'a> {
                         sym.set_sub(self.lexer.arg_to_string());
                         expr_stack.push(Expr::Sym(sym));
                     }
-                    Expr::Func(func) => {
+                    Expr::Gate(gate) => {
                         self.lexer.read_char();
                         let qbit = self.lexer.arg_to_string().parse::<u32>().unwrap();
-                        let expr = match func.name {
-                            FuncName::H(_) => {
-                                Expr::Func(Func::new(FuncName::H(qbit), Expr::Sym(Sym::new("x"))))
-                            }
-                            _ => panic!("unexpected sub for function"),
-                        };
-                        expr_stack.push(expr);
+                        expr_stack.push(Expr::Gate(gate.change_qbit(qbit)));
                     }
                     _ => panic!("Underscore must come after symbol"),
                 },
@@ -166,10 +172,16 @@ impl<'a> Parser<'a> {
     }
 
     fn handle_pre_defined(&self, sym: Sym) -> Expr {
-        if sym.symbol == "H" {
-            return Expr::Func(Func::new(FuncName::H(0), Expr::Sym(Sym::new(""))));
+        match sym.symbol.as_str() {
+            "H" => Expr::Gate(Gate::new(GateName::H(0))),
+            "X" => Expr::Gate(Gate::new(GateName::X(0))),
+            "Y" => Expr::Gate(Gate::new(GateName::Y(0))),
+            "Z" => Expr::Gate(Gate::new(GateName::Z(0))),
+            "S" => Expr::Gate(Gate::new(GateName::S(0))),
+            "T" => Expr::Gate(Gate::new(GateName::T(0))),
+            "I" => Expr::Gate(Gate::new(GateName::I(0))),
+            _ => Expr::Sym(sym),
         }
-        Expr::Sym(sym)
     }
 
     fn handle_implicit_mul(
@@ -295,6 +307,7 @@ fn test_parser() {
             "mat([[a+b, b], [c, d]])*b",
         ],
         ["\\left|00\\right>", "|00>"],
+        ["H_{0}\\left|00\\right>", "H(0)*|00>"],
         ["H_{2}", "H(2)"],
         ["H", "H(0)"],
     ];

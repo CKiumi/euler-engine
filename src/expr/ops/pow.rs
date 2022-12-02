@@ -1,4 +1,4 @@
-use super::{Add, Expr, Frac, Func, Ket, Mat, Mul, Num, Par, Pow, Sym, Tensor};
+use super::{Add, Expr, Frac, Func, Gate, Ket, Mat, Mul, Num, Par, Pow, Sym, Tensor};
 use std::ops::BitXor;
 
 macro_rules! impl_ops_add {
@@ -30,4 +30,4 @@ macro_rules! impl_ops_add {
     };
 }
 
-impl_ops_add!(Sym Pow Add Mul Par Num Func Frac Mat Tensor Ket);
+impl_ops_add!(Sym Pow Add Mul Par Num Func Frac Mat Tensor Ket Gate);

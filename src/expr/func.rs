@@ -12,7 +12,6 @@ pub enum FuncName {
     Re,
     Im,
     Sqrt,
-    H(u32),
 }
 
 impl Display for FuncName {
@@ -24,7 +23,6 @@ impl Display for FuncName {
             FuncName::Re => write!(f, "Re"),
             FuncName::Im => write!(f, "Im"),
             FuncName::Sqrt => write!(f, "sqrt"),
-            FuncName::H(qbit) => write!(f, "H({})", qbit),
         }
     }
 }
@@ -53,9 +51,6 @@ impl ToExpr for Func {
 impl Display for Func {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let args = self.args.to_string();
-        if let FuncName::H(_) = self.name {
-            return write!(f, "{}", self.name);
-        }
         write!(f, "{}({})", self.name, args)
     }
 }

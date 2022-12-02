@@ -2,6 +2,7 @@ mod add;
 mod braket;
 mod frac;
 mod func;
+mod gate;
 mod mat;
 mod mul;
 mod num;
@@ -14,6 +15,7 @@ pub use add::Add;
 pub use braket::Ket;
 pub use frac::Frac;
 pub use func::{Func, FuncName};
+pub use gate::{Gate, GateName};
 pub use mat::Mat;
 pub use mul::Mul;
 pub use num::Num;
@@ -36,6 +38,7 @@ pub enum Expr {
     Frac(Frac),
     Mat(Mat),
     Ket(Ket),
+    Gate(Gate),
 }
 
 pub trait ToExpr {
@@ -143,7 +146,7 @@ macro_rules! match_all_pairs {
     };
 }
 
-match_all_pairs!(Num Sym Add Mul Pow Par Func Frac Mat Tensor Ket);
+match_all_pairs!(Num Sym Add Mul Pow Par Func Frac Mat Tensor Ket Gate);
 
 impl Display for Expr {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
@@ -159,6 +162,7 @@ impl Display for Expr {
             Expr::Mat(mat) => write!(f, "{}", mat),
             Expr::Tensor(tensor) => write!(f, "{}", tensor),
             Expr::Ket(ket) => write!(f, "{}", ket),
+            Expr::Gate(gate) => write!(f, "{}", gate),
         }
     }
 }
