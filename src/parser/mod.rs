@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
         let first_token = self.lexer.next_token();
         let mut infix_stack: Vec<Infix> = vec![];
         let mut expr_stack: Vec<Expr> = vec![match first_token {
-            Token::Sym(slice) => Expr::Sym(Sym::new(slice)),
+            Token::Sym(slice) => self.handle_pre_defined(Sym::new(slice)),
             Token::Num(num) => Expr::Num(num),
             Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
             Token::Bar => Expr::Ket(Ket::new(self.lexer.arg_to_string())),
@@ -109,7 +109,18 @@ impl<'a> Parser<'a> {
                     Expr::Sym(mut sym) => {
                         self.lexer.read_char();
                         sym.set_sub(self.lexer.arg_to_string());
-                        expr_stack.push(self.handle_pre_defined(sym));
+                        expr_stack.push(Expr::Sym(sym));
+                    }
+                    Expr::Func(func) => {
+                        self.lexer.read_char();
+                        let qbit = self.lexer.arg_to_string().parse::<u32>().unwrap();
+                        let expr = match func.name {
+                            FuncName::H(_) => {
+                                Expr::Func(Func::new(FuncName::H(qbit), Expr::Sym(Sym::new("x"))))
+                            }
+                            _ => panic!("unexpected sub for function"),
+                        };
+                        expr_stack.push(expr);
                     }
                     _ => panic!("Underscore must come after symbol"),
                 },
@@ -117,7 +128,7 @@ impl<'a> Parser<'a> {
                     self.handle_implicit_mul(
                         &mut expr_stack,
                         &mut infix_stack,
-                        Expr::Sym(Sym::new(sym)),
+                        self.handle_pre_defined(Sym::new(sym)),
                     );
                 }
                 Token::Num(num) => match infix_stack.last() {
@@ -156,13 +167,7 @@ impl<'a> Parser<'a> {
 
     fn handle_pre_defined(&self, sym: Sym) -> Expr {
         if sym.symbol == "H" {
-            if !sym.sub.is_empty() {
-                return Expr::Func(Func::new(FuncName::H(0), Expr::Sym(Sym::new(""))));
-            }
-            return Expr::Func(Func::new(
-                FuncName::H(sym.sub.parse::<u32>().unwrap()),
-                Expr::Sym(Sym::new("")),
-            ));
+            return Expr::Func(Func::new(FuncName::H(0), Expr::Sym(Sym::new(""))));
         }
         Expr::Sym(sym)
     }
@@ -290,7 +295,8 @@ fn test_parser() {
             "mat([[a+b, b], [c, d]])*b",
         ],
         ["\\left|00\\right>", "|00>"],
-        ["H_{0}", "H(0)"],
+        ["H_{2}", "H(2)"],
+        ["H", "H(0)"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);
