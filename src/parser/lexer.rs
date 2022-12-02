@@ -6,6 +6,9 @@ pub enum Token {
     Minus,
     LCurlyBrace,
     RCurlyBrace,
+    Bar,
+    Langle,
+    Rangle,
     RParen,
     LParen,
     Num(Num),
@@ -67,10 +70,13 @@ impl<'a> Lexer<'a> {
             '+' => Token::Infix(Infix::Add),
             '-' => Token::Minus,
             '*' => Token::Infix(Infix::Mul),
+            '|' => Token::Bar,
             '(' => Token::LParen,
             ')' => Token::RParen,
             '{' => Token::LCurlyBrace,
             '}' => Token::RCurlyBrace,
+            '<' => Token::Langle,
+            '>' => Token::Rangle,
             '^' => Token::Infix(Infix::Circumflex),
             '_' => Token::Infix(Infix::Underscore),
             '&' => Token::Ampersand,
@@ -105,6 +111,7 @@ impl<'a> Lexer<'a> {
             "sqrt" => Token::Func(FuncName::Sqrt),
             "begin" => {
                 self.skip_whitespace();
+                self.read_char();
                 match self.arg_to_string().as_str() {
                     "matrix" | "pmatrix" | "bmatrix" => Token::MatrixBegin,
                     _ => Token::Error("unknown command".to_string()),
@@ -112,6 +119,7 @@ impl<'a> Lexer<'a> {
             }
             "end" => {
                 self.skip_whitespace();
+                self.read_char();
                 match self.arg_to_string().as_str() {
                     "matrix" | "pmatrix" | "bmatrix" => Token::MatrixEnd,
                     _ => Token::Error("unknown command".to_string()),
@@ -135,8 +143,8 @@ impl<'a> Lexer<'a> {
 
     pub fn arg_to_string(&mut self) -> String {
         let mut result = String::new();
-        self.read_char();
-        while self.cur != '}' {
+        // self.read_char();
+        while self.cur != '}' && self.cur != '>' {
             result.push(self.read_char());
             if self.cur == '\u{0}' {
                 panic!("expected }}")

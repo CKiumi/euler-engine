@@ -37,6 +37,7 @@ pub fn to_sympy(expr: &Expr) -> String {
                 format!("Function(\"\\{}\")({})", func.name, to_sympy(&func.args))
             }
             FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
+            FuncName::H(qbit) => format!("H({})", qbit),
         },
         Expr::Frac(frac) => format!("({})/({})", to_sympy(&frac.numer), to_sympy(&frac.denom)),
         Expr::Mat(mat) => {
@@ -54,6 +55,7 @@ pub fn to_sympy(expr: &Expr) -> String {
             result.push_str("])");
             result
         }
+        Expr::Ket(ket) => format!("Qubit(\"{}\")", ket),
     }
 }
 

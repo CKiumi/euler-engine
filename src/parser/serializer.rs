@@ -79,6 +79,7 @@ pub fn serialize(expr: &Expr) -> String {
             result.push_str("\\end{pmatrix}");
             result
         }
+        Expr::Ket(ket) => format!("|{}\\rangle", ket.inner),
     }
 }
 

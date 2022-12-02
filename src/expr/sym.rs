@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Sym {
     pub symbol: String,
-    sub: String,
+    pub sub: String,
 }
 
 impl ToExpr for Sym {

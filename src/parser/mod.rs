@@ -1,6 +1,6 @@
 pub mod lexer;
 use crate::{
-    expr::{Frac, Func, FuncName, Mat, Par, Tensor},
+    expr::{Frac, Func, FuncName, Ket, Mat, Par, Tensor},
     Expr, Num, Pow, Sym,
 };
 use lexer::{Lexer, Token};
@@ -32,6 +32,7 @@ impl<'a> Parser<'a> {
             Token::Sym(slice) => Expr::Sym(Sym::new(slice)),
             Token::Num(num) => Expr::Num(num),
             Token::LParen => Expr::Par(Par::new(self.parse(&Token::RParen))),
+            Token::Bar => Expr::Ket(Ket::new(self.lexer.arg_to_string())),
             Token::Func(func) => self.parse_func(func),
             Token::Frac => Expr::Frac(Frac::new(self.parse_arg(), self.parse_arg())),
             Token::Minus => Expr::Num(Num::new(-1)),
@@ -106,6 +107,7 @@ impl<'a> Parser<'a> {
                 }
                 Token::Infix(Infix::Underscore) => match expr_stack.pop().unwrap() {
                     Expr::Sym(mut sym) => {
+                        self.lexer.read_char();
                         sym.set_sub(self.lexer.arg_to_string());
                         expr_stack.push(Expr::Sym(sym));
                     }
@@ -151,6 +153,19 @@ impl<'a> Parser<'a> {
             _ => panic!("expr_stack must contain only one expr at last"),
         }
     }
+
+    // fn handle_pre_defined(&self, sym: Sym) -> Expr {
+    //     if sym.symbol == "H" {
+    //         if sym.sub != "" {
+    //             return Expr::Func(Func::new(FuncName::H(0), Expr::Add(Add::new(vec![]))));
+    //         }
+    //         Expr::Func(Func::new(
+    //             FuncName::H(sym.sub.parse::<i32>().unwrap()),
+    //             vec![],
+    //         ))
+    //     }
+    //     Expr::Sym(sym)
+    // }
 
     fn handle_implicit_mul(
         &self,
@@ -274,6 +289,8 @@ fn test_parser() {
             "\\begin{pmatrix}a+ b & b \\\\ c & d\\end{pmatrix}b",
             "mat([[a+b, b], [c, d]])*b",
         ],
+        ["\\left|00\\right>", "|00>"],
+        // ["H_{0}", "H(0)"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);
