@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
                     Expr::Sym(mut sym) => {
                         self.lexer.read_char();
                         sym.set_sub(self.lexer.arg_to_string());
-                        expr_stack.push(Expr::Sym(sym));
+                        expr_stack.push(self.handle_pre_defined(sym));
                     }
                     _ => panic!("Underscore must come after symbol"),
                 },
@@ -154,18 +154,18 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // fn handle_pre_defined(&self, sym: Sym) -> Expr {
-    //     if sym.symbol == "H" {
-    //         if sym.sub != "" {
-    //             return Expr::Func(Func::new(FuncName::H(0), Expr::Add(Add::new(vec![]))));
-    //         }
-    //         Expr::Func(Func::new(
-    //             FuncName::H(sym.sub.parse::<i32>().unwrap()),
-    //             vec![],
-    //         ))
-    //     }
-    //     Expr::Sym(sym)
-    // }
+    fn handle_pre_defined(&self, sym: Sym) -> Expr {
+        if sym.symbol == "H" {
+            if !sym.sub.is_empty() {
+                return Expr::Func(Func::new(FuncName::H(0), Expr::Sym(Sym::new(""))));
+            }
+            return Expr::Func(Func::new(
+                FuncName::H(sym.sub.parse::<u32>().unwrap()),
+                Expr::Sym(Sym::new("")),
+            ));
+        }
+        Expr::Sym(sym)
+    }
 
     fn handle_implicit_mul(
         &self,
@@ -290,7 +290,7 @@ fn test_parser() {
             "mat([[a+b, b], [c, d]])*b",
         ],
         ["\\left|00\\right>", "|00>"],
-        // ["H_{0}", "H(0)"],
+        ["H_{0}", "H(0)"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);

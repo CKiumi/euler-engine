@@ -53,6 +53,9 @@ impl ToExpr for Func {
 impl Display for Func {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let args = self.args.to_string();
+        if let FuncName::H(_) = self.name {
+            return write!(f, "{}", self.name);
+        }
         write!(f, "{}({})", self.name, args)
     }
 }
