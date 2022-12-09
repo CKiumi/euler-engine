@@ -101,6 +101,11 @@ impl<'a> Lexer<'a> {
             command.push(self.read_char());
         }
         match command.as_str() {
+            "operatorname" => {
+                self.read_char();
+                let name = self.arg_to_string();
+                Token::Sym(name)
+            }
             "otimes" => Token::Infix(Infix::Tensor),
             "frac" => Token::Frac,
             "sin" => Token::Func(FuncName::Sin),
@@ -158,7 +163,7 @@ impl<'a> Lexer<'a> {
 #[test]
 fn test_lexer() {
     let mut lexer = Lexer::new(
-        " - (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x \\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix}",
+        " - (\\Re(x) {\\} ab +3 2)\\zeta _{x} c\\x \\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix}\\operatorname{CNOT}",
     );
     assert_eq!(lexer.next_token(), Token::Minus);
     assert_eq!(lexer.next_token(), Token::LParen);
@@ -190,5 +195,6 @@ fn test_lexer() {
     assert_eq!(lexer.next_token(), Token::Ampersand);
     assert_eq!(lexer.next_token(), Token::Sym("d".to_owned()));
     assert_eq!(lexer.next_token(), Token::MatrixEnd);
+    assert_eq!(lexer.next_token(), Token::Sym("CNOT".to_owned()));
     assert_eq!(lexer.next_token(), Token::Eof);
 }

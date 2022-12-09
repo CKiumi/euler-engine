@@ -123,11 +123,27 @@ impl<'a> Parser<'a> {
                         sym.set_sub(self.lexer.arg_to_string());
                         expr_stack.push(Expr::Sym(sym));
                     }
-                    Expr::Gate(gate) => {
-                        self.lexer.read_char();
-                        let qbit = self.lexer.arg_to_string().parse::<u32>().unwrap();
-                        expr_stack.push(Expr::Gate(gate.change_qbit(qbit)));
-                    }
+                    Expr::Gate(gate) => match gate.name {
+                        GateName::CNOT(_, _) | GateName::CZ(_, _) => {
+                            self.lexer.read_char();
+                            let parts: Vec<String> = self
+                                .lexer
+                                .arg_to_string()
+                                .split(',')
+                                .map(|s| s.to_string())
+                                .collect();
+                            dbg!(&parts);
+                            expr_stack.push(Expr::Gate(gate.change_qbits(
+                                parts[0].parse::<u32>().unwrap(),
+                                parts[1].parse::<u32>().unwrap(),
+                            )))
+                        }
+                        _ => {
+                            self.lexer.read_char();
+                            let qbit = self.lexer.arg_to_string().parse::<u32>().unwrap();
+                            expr_stack.push(Expr::Gate(gate.change_qbit(qbit)));
+                        }
+                    },
                     _ => panic!("Underscore must come after symbol"),
                 },
                 Token::Sym(sym) => {
@@ -180,6 +196,8 @@ impl<'a> Parser<'a> {
             "S" => Expr::Gate(Gate::new(GateName::S(0))),
             "T" => Expr::Gate(Gate::new(GateName::T(0))),
             "I" => Expr::Gate(Gate::new(GateName::I(0))),
+            "CNOT" => Expr::Gate(Gate::new(GateName::CNOT(0, 1))),
+            "CZ" => Expr::Gate(Gate::new(GateName::CZ(0, 1))),
             _ => Expr::Sym(sym),
         }
     }
@@ -310,6 +328,8 @@ fn test_parser() {
         ["H_{0}\\left|00\\right>", "H(0)*|00>"],
         ["H_{2}", "H(2)"],
         ["H", "H(0)"],
+        ["\\operatorname{CNOT}_{1,2}", "CNOT(1, 2)"],
+        ["\\operatorname{CZ}_{0,1}", "CZ(0, 1)"],
     ];
     tests.iter().for_each(|test| {
         asrt(latex_to_expr(test[0]), test[1]);

@@ -1,4 +1,7 @@
-use crate::{expr::FuncName, Expr};
+use crate::{
+    expr::{FuncName, GateName},
+    Expr,
+};
 
 pub fn to_sympy(expr: &Expr) -> String {
     match expr {
@@ -38,7 +41,15 @@ pub fn to_sympy(expr: &Expr) -> String {
             }
             FuncName::Sqrt => format!("sqrt({})", to_sympy(&func.args)),
         },
-        Expr::Gate(gate) => gate.to_string(),
+        Expr::Gate(gate) => match gate.name {
+            GateName::CNOT(q1, q2) => {
+                format!("CGate(({}),X({}))", q1, q2)
+            }
+            GateName::CZ(q1, q2) => {
+                format!("CGate(({}),Z({}))", q1, q2)
+            }
+            _ => gate.to_string(),
+        },
         Expr::Frac(frac) => format!("({})/({})", to_sympy(&frac.numer), to_sympy(&frac.denom)),
         Expr::Mat(mat) => {
             let mut result = "Matrix([[".to_string();
@@ -103,7 +114,9 @@ fn test_sympy() {
         [
             "H_{0}H_{1}\\left|00\\right>",
             r#"H(0)*H(1)*Qubit('00')"#,
-        ]
+        ],
+        ["\\operatorname{CNOT}_{0,1}\\left|00\\right>",r#"CGate((0),X(1))*Qubit('00')"#],
+        ["\\operatorname{CZ}_{0,1}\\left|00\\right>",r#"CGate((0),Z(1))*Qubit('00')"#]
     ];
     tests.iter().for_each(|test| {
         assert_eq!(latex_to_sympy(test[0].to_string()), test[1]);

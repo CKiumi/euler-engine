@@ -3,6 +3,7 @@ use crate::Expr;
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Copy)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum GateName {
     I(u32),
     X(u32),
@@ -11,6 +12,8 @@ pub enum GateName {
     H(u32),
     S(u32),
     T(u32),
+    CNOT(u32, u32),
+    CZ(u32, u32),
 }
 
 impl Display for GateName {
@@ -23,6 +26,8 @@ impl Display for GateName {
             GateName::S(qbit) => write!(f, "S({})", qbit),
             GateName::H(qbit) => write!(f, "H({})", qbit),
             GateName::T(qbit) => write!(f, "T({})", qbit),
+            GateName::CNOT(qbit1, qbit2) => write!(f, "CNOT({}, {})", qbit1, qbit2),
+            GateName::CZ(qbit1, qbit2) => write!(f, "CZ({}, {})", qbit1, qbit2),
         }
     }
 }
@@ -45,6 +50,14 @@ impl Gate {
             GateName::S(_) => Gate::new(GateName::S(qbit)),
             GateName::H(_) => Gate::new(GateName::H(qbit)),
             GateName::T(_) => Gate::new(GateName::T(qbit)),
+            _ => panic!("Cannot change qbit of CNOT gate"),
+        }
+    }
+    pub fn change_qbits(&self, qbit1: u32, qbit2: u32) -> Self {
+        match self.name {
+            GateName::CNOT(_, _) => Gate::new(GateName::CNOT(qbit1, qbit2)),
+            GateName::CZ(_, _) => Gate::new(GateName::CZ(qbit1, qbit2)),
+            _ => panic!("Cannot change qbits of non-controlled gate"),
         }
     }
 }
